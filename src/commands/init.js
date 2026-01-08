@@ -1,15 +1,15 @@
 import {
   DEFAULT_CONFIG,
   DEFAULT_ENTRY_TEMPLATE,
-} from "../constants/default-constants.js";
+} from "#constants/default-constants";
 
 import {
   addToFile,
   ensureDir,
   saveJson,
-} from "../utils/filesystem.js";
+} from "#utils/filesystem";
 
-import logger from "../utils/logger.js";
+import logger from "#utils/logger";
 
 export async function init() {
   try {
@@ -26,8 +26,7 @@ export async function init() {
     await addToFile(".gitignore", ["gen-commit/"]);
     await addToFile(".env", ["GEN_COMMIT_GEMINI_API_KEY="]);
 
-    logger.success(`
-        gen-commit initialized successfully!
+    logger.success(`gen-commit initialized successfully!
 
         Created files:
         - gen-commit.config.json

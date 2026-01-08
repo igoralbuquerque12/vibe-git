@@ -1,13 +1,13 @@
-import { gitDiff, untrackedFiles } from "../services/git.js";
-import { getConfigPath, readJson, saveMarkdown } from "../utils/filesystem.js";
-import { generateCommitPlan } from "../services/gemini.js";
+import { gitDiff, untrackedFiles } from "#services/git";
+import { getConfigPath, readJson, saveMarkdown } from "#utils/filesystem";
+import { generateCommitPlan } from "#services/gemini";
 
 import {
   context,
   obrigatoryInstructions,
   outputFormatInstructions,
-} from "../constants/fixed-prompt.js";
-import logger from "../utils/logger.js";
+} from "#constants/fixed-prompt";
+import logger from "#utils/logger";
 
 export async function run(fileDestination) {
   try {
