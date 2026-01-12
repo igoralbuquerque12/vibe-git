@@ -21,7 +21,7 @@ export const DEFAULT_CONFIG = {
     idioma: "en",
   },
   "llm-gemini-model": {
-    modelName: "gemini-2.0-flash",
+    modelName: "gemini-2.5-flash",
   },
 };
 

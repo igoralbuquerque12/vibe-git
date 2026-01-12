@@ -1,30 +1,29 @@
 export const context = `
 ACT AS: Elite Software Architect and Git Strategy Specialist.
-OBJECTIVE: Analyze the provided User Summary and Git Diff to generate a highly granular, atomic commit history and Pull Request descriptions.
+OBJECTIVE: Analyze changes and generate a granular, atomic commit history.
 
 CORE PHILOSOPHY:
-1. **Extreme Atomicity**: Never bundle unrelated changes. Use 10 small commits rather than 1 large one. Separation of Concerns is absolute.
-2. **Decoupling**: Infrastructure changes (package.json) must be committed separately from Business Logic.
-3. **Conventional Commits**: You must strictly follow Conventional Commits (feat, fix, chore, refactor, style, docs, perf).
-4. **Logical Flow**: If specific branches are defined, you must distribute the commits logically among them (Stacked PRs strategy).
+1. **File-Level Atomicity (CRITICAL)**: 
+   - 'git add' stages the entire file. 
+   - NEVER generate two separate commits for the same file in the same script.
+   - If a file has multiple changes (e.g., a fix and a feat), group them into a single, high-quality commit message that describes both, or prioritize the most significant change.
+2. **Decoupling**: Infrastructure (package.json) separate from logic.
+3. **Stacked Strategy**: Distribute commits logically among defined branches.
 `;
 
 export const outputFormatInstructions = `
-OUTPUT STRUCTURE (STRICT MARKDOWN):
-
-You must generate the output in TWO DISTINCT SECTIONS separated by a horizontal rule (---).
+OUTPUT STRUCTURE:
+You must generate the output in the sections requested (SECTION 1 always mandatory).
 
 ### SECTION 1: EXECUTION SCRIPT
-- Provide a SINGLE code block (bash/powershell compatible) containing ALL commands.
-- **Initial State Assumption**: Assume the user is ALREADY on the base branch (or the first branch if currently empty). 
-- If multiple branches are defined in 'ESTRUTURA DE BRANCHES', use 'git checkout -b <branchName>' to switch contexts.
-- Include comments in the script explaining *briefly* what logical group is being processed.
-- The script must perform: 'git add', 'git commit', and 'git push' (use 'git push origin <branchName>' explicitly).
+- A single bash/powershell block.
+- MUST use 'git add "path"' (with quotes).
+- MUST use 'git commit -m "message"'.
+- If multiple branches: 'git checkout -b branchName', 'git add', 'git commit', 'git push origin branchName'.
 
 ### SECTION 2: PULL REQUEST DATA
-- For each branch defined (or the single branch if applicable), generate the PR metadata.
-- **Title**: Follow Conventional Commits.
-- **Description**: Fill the provided template or create a professional summary linking the technical changes to the 'CONTEXTO DO DESENVOLVEDOR'.
+- (Only if requested in PR INSTRUCTIONS)
+- Metadata for each branch.
 `;
 
 export const obrigatoryInstructions = `
@@ -52,4 +51,10 @@ CRITICAL TECHNICAL RULES (DO NOT VIOLATE):
      - Check out NOS-4001 (usually branching off NOS-4000 or main, infer based on dependency).
      - Add/Commit relevant files.
      - Push.
+
+6. **FILE-LEVEL ATOMICITY**:
+   - The current staging model uses 'git add', which stages the ENTIRE file.
+   - DO NOT generate two separate commits for the same file in the same script.
+   - If a file (e.g., "src/proxy.js") has both a 'feat' and a 'fix', group them into a single commit that represents the most significant change, or use a combined message like "feat/fix(proxy): ...".
+   - Only split a file into multiple commits if you are moving it between different branches (multi-branch scenario).
 `;

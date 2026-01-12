@@ -1,7 +1,6 @@
 import { gitDiff, untrackedFiles } from "#services/git";
 import { getConfigPath, readJson, saveMarkdown } from "#utils/filesystem";
 import { generateCommitPlan } from "#services/gemini";
-
 import {
   context,
   obrigatoryInstructions,
@@ -41,19 +40,37 @@ export async function run(fileDestination) {
       ? template.userSummary.map(item => `* ${item}`).join("\n")
       : "No summary provided by the user. Rely purely on the DIFF.";
 
-    const prConfig = config.PRs || {};
-    let prTemplateContent = "";
-    let prLanguage = "en";
+    const commitConfig = config.commits || {};
+    const commitRules = commitConfig.useConventionalCommits
+      ? `STRICTLY FOLLOW Conventional Commits. Allowed types: ${commitConfig.conventionalCommitTypes.join(", ")}.`
+      : "DO NOT use Conventional Commits. Use natural and descriptive language for commit messages.";
 
+    const prConfig = config.PRs || {};
+    let prInstruction = "DO NOT GENERATE SECTION 2 (PULL REQUEST DATA). Provide only the execution script.";
+    
     if (prConfig.createPRs) {
-      prTemplateContent = (prConfig.model && prConfig.model.trim() !== "")
+      const prTemplateContent = (prConfig.model && prConfig.model.trim() !== "")
         ? prConfig.model
-        : "No template provided. Create a comprehensive model yourself.";
-      prLanguage = prConfig.idioma || "en";
+        : "Create a professional summary yourself.";
+      const prLanguage = prConfig.idioma || "en";
+
+      prInstruction = `
+        GENERATE SECTION 2: PULL REQUEST DATA.
+        - Language: ${prLanguage}
+        - Template: ${prTemplateContent}
+      `;
     }
 
     const fullPrompt = `
       ${context}
+
+      ---
+      COMMIT CONVENTIONS:
+      ${commitRules}
+
+      ---
+      PR INSTRUCTIONS:
+      ${prInstruction}
 
       ---
       DEVELOPER CONTEXT (Summary of work done):
@@ -72,14 +89,16 @@ export async function run(fileDestination) {
       ${untracked}
 
       ---
-      FORMATTING AND PR RULES:
+      FORMATTING RULES:
       ${outputFormatInstructions}
 
-      PR CONFIG:
-      - Language: ${prLanguage}
-      - Template: ${prTemplateContent}
-
       ${obrigatoryInstructions}
+
+      ---
+      ANTI-BUG RULE (FILE-LEVEL ATOMICITY):
+      1. 'git add' stages the entire file. 
+      2. NEVER generate two separate commits for the same file in the same plan.
+      3. If a file (e.g., "src/proxy.js") has multiple changes, group them into a single, high-quality commit message that describes both, or prioritize the most significant change.
     `;
 
     logger.info("🤖 Gemini Architect analyzing diff and generating atomic plan...");
@@ -90,9 +109,7 @@ export async function run(fileDestination) {
       : `plan-${Date.now()}.md`;
     const finalPath = await saveMarkdown("gen-commit/exit", exitName, plan);
 
-    logger.success(
-      `Atomic plan generated successfully at: ${finalPath}`
-    );
+    logger.success(`Atomic plan generated successfully at: ${finalPath}`);
   } catch (error) {
     logger.error(`Failed to execute gen-commit: ${error.message}`);
   }
