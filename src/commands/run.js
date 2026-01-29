@@ -1,6 +1,8 @@
 import { gitDiff, untrackedFiles } from "#services/git";
 import { getConfigPath, readJson, saveMarkdown } from "#utils/filesystem";
-import { generateCommitPlan } from "#services/gemini";
+
+import { generateCommitPlan as generateGeminiPlan } from "#services/gemini";
+import { generateCommitPlan as generateOpenAIPlan } from "#services/openai";
 import {
   context,
   obrigatoryInstructions,
@@ -41,9 +43,11 @@ export async function run(fileDestination) {
       : "No summary provided by the user. Rely purely on the DIFF.";
 
     const commitConfig = config.commits || {};
+    const commitLanguage = commitConfig.idioma || "en";
+    
     const commitRules = commitConfig.useConventionalCommits
-      ? `STRICTLY FOLLOW Conventional Commits. Allowed types: ${commitConfig.conventionalCommitTypes.join(", ")}.`
-      : "DO NOT use Conventional Commits. Use natural and descriptive language for commit messages.";
+      ? `STRICTLY FOLLOW Conventional Commits. Allowed types: ${commitConfig.conventionalCommitTypes.join(", ")}. WRITE THE COMMIT MESSAGES IN: ${commitLanguage}.`
+      : `DO NOT use Conventional Commits. Use natural and descriptive language for commit messages. WRITE THE COMMIT MESSAGES IN: ${commitLanguage}.`;
 
     const prConfig = config.PRs || {};
     let prInstruction = "DO NOT GENERATE SECTION 2 (PULL REQUEST DATA). Provide only the execution script.";
@@ -98,11 +102,20 @@ export async function run(fileDestination) {
       ANTI-BUG RULE (FILE-LEVEL ATOMICITY):
       1. 'git add' stages the entire file. 
       2. NEVER generate two separate commits for the same file in the same plan.
-      3. If a file (e.g., "src/proxy.js") has multiple changes, group them into a single, high-quality commit message that describes both, or prioritize the most significant change.
+      3. If a file has multiple changes, group them into a single commit for that specific file.
+      4. DO NOT group multiple distinct files unless they are absolutely inseparable.
     `;
 
-    logger.info("🤖 Gemini Architect analyzing diff and generating atomic plan...");
-    const plan = await generateCommitPlan(config, fullPrompt);
+    const provider = config.aiProvider || "gemini";
+    let plan;
+
+    if (provider === "openai") {
+      logger.info("🤖 OpenAI (ChatGPT) analyzing diff and generating atomic plan...");
+      plan = await generateOpenAIPlan(config, fullPrompt);
+    } else {
+      logger.info("🤖 Gemini Architect analyzing diff and generating atomic plan...");
+      plan = await generateGeminiPlan(config, fullPrompt);
+    }
 
     const exitName = template.exitName
       ? `${template.exitName}.md`
