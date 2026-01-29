@@ -24,7 +24,7 @@ export async function init() {
     );
 
     await addToFile(".gitignore", ["gen-commit/"]);
-    await addToFile(".env", ["GEN_COMMIT_GEMINI_API_KEY="]);
+    await addToFile(".env", ["GEN_COMMIT_AI_API_KEY="]);
 
     logger.success(`gen-commit initialized successfully!
 

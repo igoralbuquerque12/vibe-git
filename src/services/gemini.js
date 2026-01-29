@@ -1,9 +1,11 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function generateCommitPlan(config, prompt) {
-  const apiKey = process.env.GEN_COMMIT_GEMINI_API_KEY;
+  const apiKey = process.env.GEN_COMMIT_AI_API_KEY;
   if (!apiKey) {
-    throw new Error("GEN_COMMIT_GEMINI_API_KEY is not set in environment variables.");
+    throw new Error(
+      "GEN_COMMIT_AI_API_KEY is not set in environment variables.",
+    );
   }
 
   const modelName = config["llm-gemini-model"].modelName;
