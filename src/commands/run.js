@@ -19,7 +19,7 @@ export async function run(fileDestination) {
       throw new Error("No destination file provided...");
     }
 
-    const filePath = `gen-commit/entry/${fileDestination}`;
+    const filePath = `vibe-git/entry/${fileDestination}`;
     const template = await readJson(filePath);
     if (!template) {
       throw new Error(`Template file not found: ${filePath}`);
@@ -34,9 +34,14 @@ export async function run(fileDestination) {
     }
 
     const branches = template.branches || [];
-    const branchLogic = branches.length > 0
-      ? branches.map((b) => `- BRANCH: "${b.branchName}" -> OBJECTIVE: ${b.description}`).join("\n")
-      : "- SINGLE BRANCH MODE: The user is on a single branch. Generate commits sequentially on it.";
+    const branchLogic =
+      branches.length > 0
+        ? branches
+            .map(
+              b => `- BRANCH: "${b.branchName}" -> OBJECTIVE: ${b.description}`
+            )
+            .join("\n")
+        : "- SINGLE BRANCH MODE: The user is on a single branch. Generate commits sequentially on it.";
 
     const userSummary = template.userSummary
       ? template.userSummary.map(item => `* ${item}`).join("\n")
@@ -44,18 +49,20 @@ export async function run(fileDestination) {
 
     const commitConfig = config.commits || {};
     const commitLanguage = commitConfig.idioma || "en";
-    
+
     const commitRules = commitConfig.useConventionalCommits
       ? `STRICTLY FOLLOW Conventional Commits. Allowed types: ${commitConfig.conventionalCommitTypes.join(", ")}. WRITE THE COMMIT MESSAGES IN: ${commitLanguage}.`
       : `DO NOT use Conventional Commits. Use natural and descriptive language for commit messages. WRITE THE COMMIT MESSAGES IN: ${commitLanguage}.`;
 
     const prConfig = config.PRs || {};
-    let prInstruction = "DO NOT GENERATE SECTION 2 (PULL REQUEST DATA). Provide only the execution script.";
-    
+    let prInstruction =
+      "DO NOT GENERATE SECTION 2 (PULL REQUEST DATA). Provide only the execution script.";
+
     if (prConfig.createPRs) {
-      const prTemplateContent = (prConfig.model && prConfig.model.trim() !== "")
-        ? prConfig.model
-        : "Create a professional summary yourself.";
+      const prTemplateContent =
+        prConfig.model && prConfig.model.trim() !== ""
+          ? prConfig.model
+          : "Create a professional summary yourself.";
       const prLanguage = prConfig.idioma || "en";
 
       prInstruction = `
@@ -110,20 +117,24 @@ export async function run(fileDestination) {
     let plan;
 
     if (provider === "openai") {
-      logger.info("🤖 OpenAI (ChatGPT) analyzing diff and generating atomic plan...");
+      logger.info(
+        "🤖 OpenAI (ChatGPT) analyzing diff and generating atomic plan..."
+      );
       plan = await generateOpenAIPlan(config, fullPrompt);
     } else {
-      logger.info("🤖 Gemini Architect analyzing diff and generating atomic plan...");
+      logger.info(
+        "🤖 Gemini Architect analyzing diff and generating atomic plan..."
+      );
       plan = await generateGeminiPlan(config, fullPrompt);
     }
 
     const exitName = template.exitName
       ? `${template.exitName}.md`
       : `plan-${Date.now()}.md`;
-    const finalPath = await saveMarkdown("gen-commit/exit", exitName, plan);
+    const finalPath = await saveMarkdown("vibe-git/exit", exitName, plan);
 
     logger.success(`Atomic plan generated successfully at: ${finalPath}`);
   } catch (error) {
-    logger.error(`Failed to execute gen-commit: ${error.message}`);
+    logger.error(`Failed to execute vibe-git: ${error.message}`);
   }
 }

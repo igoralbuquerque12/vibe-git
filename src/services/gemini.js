@@ -1,11 +1,10 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function generateCommitPlan(config, prompt) {
-  const apiKey = process.env.GEN_COMMIT_AI_API_KEY;
+  const apiKey =
+    process.env.VIBE_GIT_AI_API_KEY || process.env.GEN_COMMIT_AI_API_KEY;
   if (!apiKey) {
-    throw new Error(
-      "GEN_COMMIT_AI_API_KEY is not set in environment variables.",
-    );
+    throw new Error("VIBE_GIT_AI_API_KEY is not set in environment variables.");
   }
 
   const modelName = config["llm-gemini-model"].modelName;

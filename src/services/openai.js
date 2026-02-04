@@ -1,11 +1,10 @@
 import logger from "#utils/logger";
 
 export async function generateCommitPlan(config, prompt) {
-  const apiKey = process.env.GEN_COMMIT_AI_API_KEY;
+  const apiKey =
+    process.env.VIBE_GIT_AI_API_KEY || process.env.GEN_COMMIT_AI_API_KEY;
   if (!apiKey) {
-    throw new Error(
-      "GEN_COMMIT_AI_API_KEY is not set in environment variables.",
-    );
+    throw new Error("VIBE_GIT_AI_API_KEY is not set in environment variables.");
   }
 
   const modelName = config["llm-openai-model"]?.modelName || "gpt-4o";
@@ -32,7 +31,7 @@ export async function generateCommitPlan(config, prompt) {
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        `OpenAI API Error: ${errorData.error?.message || response.statusText}`,
+        `OpenAI API Error: ${errorData.error?.message || response.statusText}`
       );
     }
 
