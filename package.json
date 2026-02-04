@@ -1,26 +1,33 @@
 {
-  "name": "gen-commit",
+  "name": "@igoralbuquerque/vibe-git",
   "version": "1.0.5",
-  "description": "",
+  "description": "Gerador de mensagens de commit utilizando IA.",
   "main": "bin/cli.js",
+  "type": "module",
+  "bin": {
+    "vibe-git": "./bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "bin": {
-    "gen-commit": "./bin/cli.js"
-  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/igoralbuquerque12/gen-commit.git"
+    "url": "git+https://github.com/igoralbuquerque12/vibe-git.git"
   },
-  "type": "module",
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "git",
+    "commit",
+    "ai",
+    "automation",
+    "gemini",
+    "openai"
+  ],
+  "author": "Igor Costa Lins de Albuquerque",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/igoralbuquerque12/gen-commit/issues"
-  },
-  "homepage": "https://github.com/igoralbuquerque12/gen-commit#readme",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "chalk": "^5.6.2",
