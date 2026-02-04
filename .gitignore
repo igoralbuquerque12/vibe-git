@@ -1,4 +1,3 @@
 node_modules/
-gen-commit/
 .env
-gen-commit.config.json
+vibe-git/
