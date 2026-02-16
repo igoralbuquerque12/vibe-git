@@ -56,7 +56,7 @@ export async function run(fileDestination) {
 
     const prConfig = config.PRs || {};
     let prInstruction =
-      "DO NOT GENERATE SECTION 2 (PULL REQUEST DATA). Provide only the execution script.";
+      "DO NOT GENERATE SECTION 3 (PULL REQUEST DATA). Provide only the execution script.";
 
     if (prConfig.createPRs) {
       const prTemplateContent =
@@ -66,7 +66,8 @@ export async function run(fileDestination) {
       const prLanguage = prConfig.idioma || "en";
 
       prInstruction = `
-        GENERATE SECTION 2: PULL REQUEST DATA.
+        GENERATE SECTION 3: PULL REQUEST DATA.
+        - CRITICAL RULE: If multiple branches are defined, you MUST generate a distinct Pull Request description FOR EACH BRANCH.
         - Language: ${prLanguage}
         - Template: ${prTemplateContent}
       `;
