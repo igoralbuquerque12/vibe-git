@@ -1,6 +1,6 @@
 {
   "name": "@igoralbuquerque/vibe-git",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Gerador de mensagens de commit utilizando IA.",
   "main": "bin/cli.js",
   "type": "module",
