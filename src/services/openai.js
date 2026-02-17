@@ -24,7 +24,6 @@ export async function generateCommitPlan(config, prompt) {
             content: prompt,
           },
         ],
-        temperature: 0.2,
       }),
     });
 
