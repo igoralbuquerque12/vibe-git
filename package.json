@@ -1,6 +1,6 @@
 {
   "name": "@igoralbuquerque/vibe-git",
-  "version": "1.0.7",
+  "version": "2.0.0",
   "description": "Gerador de mensagens de commit utilizando IA.",
   "main": "bin/cli.js",
   "type": "module",
@@ -24,12 +24,12 @@
     "ai",
     "automation",
     "gemini",
-    "openai"
+    "openai",
+    "groq"
   ],
   "author": "Igor Costa Lins de Albuquerque",
   "license": "MIT",
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
     "chalk": "^5.6.2",
     "dotenv": "^17.2.3"
   },
