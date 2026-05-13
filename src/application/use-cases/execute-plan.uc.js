@@ -157,7 +157,11 @@ export class ExecutePlanUseCase {
           repoInfo,
         });
 
-        checkoutBranch(sourceBranch);
+        if (i == plan.branches.length - 1) {
+          continue;
+        } else {
+          checkoutBranch(sourceBranch);
+        }
       }
 
       logger.success(`All done! Returned to ${sourceBranch}.`);
