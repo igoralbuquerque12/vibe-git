@@ -1,6 +1,7 @@
 export const DEFAULT_CONFIG = {
-  _aiProvider_info: "Options: 'gemini' | 'openai'",
+  _aiProvider_info: "Options: 'gemini' | 'openai' | 'groq'",
   aiProvider: "gemini",
+  disableWarns: false,
 
   PRs: {
     createPRs: true,
@@ -8,6 +9,7 @@ export const DEFAULT_CONFIG = {
     model:
       "# Description\nWrite a detailed description...\n\n# Justification\nExplain the reason...",
     idioma: "en",
+    prBase: "main",
   },
 
   commits: {
@@ -31,11 +33,17 @@ export const DEFAULT_CONFIG = {
   "llm-openai-model": {
     modelName: "gpt-4o",
   },
+  "llm-groq-model": {
+    modelName: "llama-3.3-70b-versatile",
+  },
 };
 
 export const DEFAULT_ENTRY_TEMPLATE = {
   "_exitName": "(OPTIONAL) Defines the name of the output markdown file. If omitted, the system generates a default name like 'plan-<timestamp>.md'.",
   "exitName": "feature-auth-plan",
+
+  "_prBase": "(OPTIONAL) The target branch for your Pull Requests. If left empty, you MUST fill 'pr.base' in the generated JSON before executing.",
+  "prBase": "main",
 
   "_userSummary": "(OPTIONAL) A brief, bulleted summary of what you achieved. Providing this context allows the AI to write much richer and deeper commit messages.",
   "userSummary": [

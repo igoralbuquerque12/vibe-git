@@ -62,3 +62,36 @@ CRITICAL TECHNICAL RULES (DO NOT VIOLATE):
    - If you modified an API route and added a schema validator to it, split them: one commit for the schema, another for the route.
    - **Golden Rule**: A commit must represent only ONE atomic unit of work. If the commit message requires an "and" (e.g., "Create button AND modify modal"), it must be split.
 `;
+
+export const jsonOutputInstructions = `
+OUTPUT FORMAT - CRITICAL:
+You MUST respond with ONLY a valid JSON object.
+No markdown, no backticks, no explanation, no preamble.
+The JSON must strictly follow this schema:
+
+{
+  "branches": [
+    {
+      "branchName": "string - exact branch name",
+      "description": "string - one sentence describing this branch purpose",
+      "pr": {
+        "title": "string - conventional commit style PR title (e.g. feat(scope): summary)",
+        "body": "string - full PR body following the provided template. Use \\n for line breaks.",
+        "base": "string - target base branch (default: main)"
+      },
+      "commits": [
+        {
+          "message": "string - conventional commit message",
+          "files": ["string - exact file path as it appears in git diff"]
+        }
+      ]
+    }
+  ]
+}
+
+RULES:
+- "pr" field must be OMITTED entirely if PRs were not requested.
+- "files" must contain exact paths from the git diff, never invented paths.
+- Every file from the diff must appear in exactly one commit.
+- Do not wrap the response in markdown code blocks.
+`;

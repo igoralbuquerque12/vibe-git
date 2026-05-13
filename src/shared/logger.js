@@ -1,6 +1,12 @@
 import chalk from 'chalk';
 
+let _disableWarns = false;
+
 const logger = {
+  setDisableWarns: (disable) => {
+    _disableWarns = disable;
+  },
+
   success: (message) => {
     console.log(chalk.green(`✔ ${message}`));
   },
@@ -10,6 +16,7 @@ const logger = {
   },
 
   warn: (message) => {
+    if (_disableWarns) return; 
     console.warn(chalk.yellow(`⚠ Warning: ${message}`));
   },
 

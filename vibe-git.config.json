@@ -1,11 +1,13 @@
 {
-  "_aiProvider_info": "Options: 'gemini' | 'openai'",
+  "_aiProvider_info": "Options: 'gemini' | 'openai' | 'groq'",
   "aiProvider": "gemini",
+  "disableWarns": false,
   "PRs": {
-    "createPRs": false,
+    "createPRs": true,
     "useModel": true,
-    "model": "# Description\nWrite a detailed description...\n\n# Justification\nExplain the reason...",
-    "idioma": "en"
+    "model": "# Summary\nProvide a concise overview of the changes introduced in this pull request.\n\n# Changes\n- Describe the main implementation details\n- Highlight important refactors or improvements\n- Mention any breaking or notable changes\n\n# Motivation\nExplain why these changes were necessary and what problem they solve.\n\n# Testing\nDescribe how the changes were tested, including unit tests, manual validation, or integration tests.\n\n# Additional Notes\nInclude any relevant context, limitations, or follow-up tasks.",
+    "idioma": "en",
+    "prBase": "main"
   },
   "commits": {
     "useConventionalCommits": true,
@@ -26,5 +28,9 @@
   },
   "llm-openai-model": {
     "modelName": "gpt-4o"
+  },
+  "llm-groq-model": {
+    "modelNameLama": "llama-3.3-70b-versatile - fraco",
+    "modelName": "openai/gpt-oss-120b"
   }
 }

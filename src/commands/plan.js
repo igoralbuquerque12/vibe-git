@@ -1,9 +1,9 @@
-import { GeneratePlanJsonUseCase } from "#application/use-cases/generate-plan-json.uc";
+import { GeneratePlanMarkdownUseCase } from "#application/use-cases/generate-plan-markdown.uc";
 import { AiProviderFactory } from "#providers/ai/ai.factory";
 import { getConfigPath, readJson } from "#shared/filesystem";
 import logger from "#shared/logger";
 
-export async function run(fileDestination) {
+export async function plan(fileDestination) {
   try {
     const config = await readJson(getConfigPath());
     if (config?.disableWarns) {
@@ -15,10 +15,10 @@ export async function run(fileDestination) {
     }
 
     const aiProvider = AiProviderFactory.create(config);
-    const useCase = new GeneratePlanJsonUseCase(aiProvider);
+    const useCase = new GeneratePlanMarkdownUseCase(aiProvider);
 
     await useCase.execute({ fileDestination });
   } catch (error) {
-    logger.error(`Failed to run vibe-git: ${error.message}`);
+    logger.error(`Failed to generate Markdown plan: ${error.message}`);
   }
 }
