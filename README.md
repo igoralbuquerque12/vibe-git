@@ -204,6 +204,15 @@ If confirmed, the PR is automatically created on GitHub.
 vibe-git exec my-plan.json --ignore-pr
 ```
 
+### Create PRs without confirmation
+
+```bash
+vibe-git exec my-plan.json --auto-create-pr
+```
+
+Use `--auto-create-pr` in automated environments to create every PR defined
+in the plan without prompting for confirmation.
+
 ---
 
 # 📜 Classic Markdown Workflow (V1)
