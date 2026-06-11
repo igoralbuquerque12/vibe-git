@@ -63,10 +63,10 @@ Quando a tarefa estiver concluida, validada e com `npm test` passando, e houver 
 
 A tool deve ser chamada com:
 - `cwd`: caminho absoluto da raiz deste repositorio;
-- `baseBranch`: `main`;
-- `branchName`: nome curto e descritivo seguindo o tipo da tarefa, por exemplo `feat/...`, `fix/...`, `refactor/...`, `docs/...` ou `chore/...`;
+- `baseBranch`: valor definido em PRs.prBase dentro de vibe-git.config.json; se o campo nao existir ou estiver vazio, use main;
+- `branchName`: nome passado pelo usuário ou, caso contrário, crie um nome curto e descritivo seguindo o tipo da tarefa;
 - `taskSummary`: lista objetiva com o que foi implementado, validado e documentado;
-- `createPullRequest`: `true` quando a entrega deve abrir PR, ou `false` quando deve apenas executar commit/push sem PR;
+- `createPullRequest`: `true` quando a entrega deve abrir PR, ou `false` quando deve apenas executar commit/push sem PR. Por padrão, sempre use `true` para criar PRs, a menos que seja avisado pelo usuário na task;
 - `requireCleanVibeGitWorkspace`: `true`.
 
 Mesmo neste repositorio sendo o proprio `vibe-git`, trate-o como qualquer outro projeto consumidor do MCP: nao execute `git add`, `git commit`, `git push` ou criacao de Pull Request manualmente.
