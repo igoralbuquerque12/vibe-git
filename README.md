@@ -1,104 +1,74 @@
-# vibe-git 🚀
+# vibe-git
 
-Your intelligent CLI for orchestrating commits and Pull Requests autonomously.
+An AI-powered CLI that turns your repository changes into an atomic commit plan, executes the plan, pushes branches, and optionally creates Pull Requests.
 
-Turn an entire day of chaotic coding into a clean, atomic Git history with automatically generated Pull Requests.
+## What It Does
 
----
+`vibe-git` reads the current Git diff and untracked files, sends that context to your selected AI provider, and produces one of two outputs:
 
-# 🎯 What is vibe-git?
+- An editable JSON plan that can be executed automatically.
+- A Markdown plan with a ready-to-run Git script for manual execution.
 
-**vibe-git** is not just a commit message generator.  
-It is a **Software Architect** and a **Git Agent** living inside your terminal.
+The automatic workflow can:
 
-After hours of coding — with changes spread across database, backend, frontend, and configs — you simply describe what you did.
+- Split changes into one or more branches.
+- Group files into atomic commits.
+- Create commits in dependency order.
+- Push each branch to `origin`.
+- Create Pull Requests through the GitHub API.
 
-Then, **vibe-git** takes over:
+> [!WARNING]
+> `vibe-git exec` runs real Git commands. Always review the generated JSON plan before executing it.
 
-- Analyzes the full repository diff
-- Detects real technical dependencies (e.g. database schema → controller → UI)
-- Designs an atomic commit strategy grouping the correct files
-- **(New)** Automatically executes commits, splitting work into multiple branches if needed
-- **(New)** Opens Pull Requests directly on GitHub with rich, formatted documentation
+## Requirements
 
----
+- Node.js with native `fetch` support.
+- Git installed and a repository with an `origin` remote.
+- An API key for Gemini, OpenAI, or Groq.
+- Push access to the remote repository when using `vibe-git exec`.
+- A GitHub token when creating Pull Requests automatically.
 
-# 🤔 Why use vibe-git instead of IDE agents (Copilot/Cursor)?
+## Installation
 
-| IDE Agents | vibe-git |
-|---|---|
-| Limited to the currently opened file | Understands the entire repository flow |
-| Often mixes unrelated changes into a single commit | Creates atomic and reversible commits |
-| Weak Git orchestration | Full Git workflow automation |
-| Manual PR creation | Automatically creates rich Pull Requests |
-| Higher token usage | Cheaper and easier to test using Gemini Flash or Groq |
-
----
-
-# 🆚 Before vs After
-
-| Traditional Workflow | vibe-git (Autonomous) |
-|---|---|
-| `git add .` | `Commit 1: chore(deps): install prisma` |
-| `git commit -m "implemented auth and fixed bugs"` | `Commit 2: feat(db): add user schema` |
-| Huge mixed commits | `Commit 3: feat(api): auth controller` |
-| Hard to revert safely | `Commit 4: feat(ui): login form` |
-| Manual PR descriptions | GitHub PR generated automatically |
-
-✅ Atomic and reversible commits  
-✅ Structured PR generation  
-✅ Human-in-the-loop review before execution
-
----
-
-# 🛠️ Installation & Setup
-
-## 1. Installation
-
-We recommend installing globally via npm:
+Install globally from npm:
 
 ```bash
 npm install -g @igoralbuquerque/vibe-git
 ```
 
----
+For local development:
 
-## 2. Initialization
+```bash
+git clone https://github.com/igoralbuquerque12/vibe-git.git
+cd vibe-git
+npm install
+npm link
+```
 
-Inside your project root (where the `.git` folder exists), run:
+## Quick Start
+
+Run these commands from the root of the Git repository you want to process.
+
+### 1. Initialize the workspace
 
 ```bash
 vibe-git init
 ```
 
-This creates the base structure:
+This creates:
 
-```txt
-vibe-git.config.json   → Your preferences (language, AI provider, conventions)
-.env                   → API keys and secrets
-vibe-git/              → Internal workspace (auto-added to .gitignore)
+```text
+vibe-git.config.json       AI provider, commit, and PR preferences
+.env                       API keys and GitHub token
+vibe-git/entry/example.json
+vibe-git/exit/
 ```
 
----
+The generated `vibe-git/` directory is added to `.gitignore`.
 
-## 3. Configure Providers
+### 2. Configure an AI provider
 
-Open the generated `.env` file and add your credentials:
-
-```env
-# Concentrate any provider key here
-VIBE_GIT_AI_API_KEY=sk-groq/gemini/openai-key
-
-# Or use the provider's key directly
-GEMINI_API_KEY=sk-your-key-here
-OPENAI_API_KEY=sk-your-key-here
-GROQ_API_KEY=sk-your-key-here
-
-# Optional but recommended (for automatic PR creation)
-GITHUB_TOKEN=ghp_your_token_here
-```
-
-Then, inside `vibe-git.config.json`, choose the active provider:
+Set the provider in `vibe-git.config.json`:
 
 ```json
 {
@@ -106,41 +76,33 @@ Then, inside `vibe-git.config.json`, choose the active provider:
 }
 ```
 
-Available options:
+Then add its API key to `.env`. You can use the shared variable:
 
-- `gemini`
-- `openai`
-- `groq`
+```env
+VIBE_GIT_AI_API_KEY=your-provider-api-key
+```
 
----
+Or a provider-specific variable:
 
-# 🔄 Workflows: V2 vs V1
+```env
+GEMINI_API_KEY=your-gemini-key
+OPENAI_API_KEY=your-openai-key
+GROQ_API_KEY=your-groq-key
+```
 
-vibe-git now supports two workflows:
+When both are present, the provider-specific variable takes precedence.
 
-- **Autonomous Workflow (Recommended)**
-- **Classic Markdown Workflow**
-
----
-
-# 🌟 Autonomous Workflow (V2)
-
-In this flow, the AI generates a structured JSON plan.  
-You review it, then the CLI executes everything automatically.
-
----
-
-## Step 1 — Describe the Work
+### 3. Describe your changes
 
 Edit `vibe-git/entry/example.json`:
 
 ```json
 {
-  "exitName": "my-plan",
-  "prBase": "develop",
+  "exitName": "feature-auth-plan",
+  "prBase": "main",
   "userSummary": [
     "Implemented JWT authentication",
-    "Created login screen"
+    "Created a login screen"
   ],
   "branches": [
     {
@@ -151,210 +113,193 @@ Edit `vibe-git/entry/example.json`:
 }
 ```
 
----
-
-## Step 2 — Generate the Structured Plan
-
-Run:
+### 4. Generate and review an executable plan
 
 ```bash
 vibe-git run example.json
 ```
 
-This generates:
+This generates `vibe-git/exit/feature-auth-plan.json`. Review and edit that file before continuing.
 
-```txt
-vibe-git/exit/my-plan.json
-```
-
-You can freely edit commit names, PR text, or descriptions before execution.
-
----
-
-## Step 3 — Execute the Plan
-
-Run:
+### 5. Execute the plan
 
 ```bash
-vibe-git exec my-plan.json
+vibe-git exec feature-auth-plan.json
 ```
 
-The CLI will:
+For every branch in the plan, `exec` creates or checks out the branch, stages the listed files, commits them, pushes the branch, and asks whether to create its Pull Request.
 
-- Create the branch
-- Group files logically
-- Execute `git add` automatically
-- Create commits with generated messages
-- Push the branch
-- Ask interactively whether to create the Pull Request
+## CLI Reference
 
-Example:
-
-```txt
-⚠️ Do you want to create the Pull Request now? (y/N)
+```text
+vibe-git init
+vibe-git run <entry-file.json>
+vibe-git plan <entry-file.json>
+vibe-git exec <exit-file.json> [--ignore-pr] [--auto-create-pr]
 ```
 
-If confirmed, the PR is automatically created on GitHub.
+Running `vibe-git` without a valid command prints this usage summary.
 
----
+| Command | Parameters | Result |
+| --- | --- | --- |
+| `vibe-git init` | None | Creates the config, `.env`, and `vibe-git/entry` and `vibe-git/exit` workspace. Existing generated config and example files are overwritten. |
+| `vibe-git run <entry-file.json>` | Required entry filename | Generates an editable JSON execution plan in `vibe-git/exit/`. |
+| `vibe-git plan <entry-file.json>` | Required entry filename | Generates a Markdown analysis and Git script in `vibe-git/exit/`. It does not execute Git commands. |
+| `vibe-git exec <exit-file.json>` | Required exit filename; optional flags below | Executes an existing JSON plan from `vibe-git/exit/`. |
 
-### Skip PR creation
+### `exec` flags
+
+| Flag | Behavior |
+| --- | --- |
+| `--ignore-pr` | Skips all Pull Request validation and creation. No `GITHUB_TOKEN` is required. |
+| `--auto-create-pr` | Creates every PR defined in the plan without asking for confirmation. Useful in non-interactive environments. |
+
+Flags must be placed after the plan filename:
 
 ```bash
-vibe-git exec my-plan.json --ignore-pr
+vibe-git exec feature-auth-plan.json --ignore-pr
+vibe-git exec feature-auth-plan.json --auto-create-pr
 ```
 
-### Create PRs without confirmation
+If both flags are provided, `--ignore-pr` takes precedence and no Pull Request is created.
 
-```bash
-vibe-git exec my-plan.json --auto-create-pr
+## Entry File Reference
+
+Commands `run` and `plan` read a JSON file from `vibe-git/entry/`.
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `exitName` | No | Output filename without extension. When omitted, a timestamped `plan-<timestamp>` name is used. |
+| `prBase` | No | Base branch inserted into generated Pull Requests. If omitted, fill each generated `pr.base` before running `exec`. |
+| `userSummary` | No | List of human-readable changes that gives the AI additional context. |
+| `branches` | Recommended | Desired branch names and their purpose. When empty or omitted, the AI is instructed to use a single-branch plan. |
+| `branches[].branchName` | Yes, when `branches` is used | Exact branch name to generate in the plan. |
+| `branches[].description` | Yes, when `branches` is used | Purpose and scope of the branch. |
+
+## Executable Plan Reference
+
+The `run` command generates a JSON file with this structure:
+
+```json
+{
+  "generatedAt": "2026-06-11T12:00:00.000Z",
+  "sourceBranch": "main",
+  "branches": [
+    {
+      "branchName": "feat/auth",
+      "description": "Authentication infrastructure",
+      "pr": {
+        "title": "feat(auth): add authentication infrastructure",
+        "body": "# Summary\n...",
+        "base": "main"
+      },
+      "commits": [
+        {
+          "message": "feat(auth): add token service",
+          "files": ["src/services/token.js"]
+        }
+      ]
+    }
+  ]
+}
 ```
 
-Use `--auto-create-pr` in automated environments to create every PR defined
-in the plan without prompting for confirmation.
+Before using `exec`, verify:
 
----
+- Every file path exists and appears in only one commit.
+- Commit and branch names are correct.
+- Every Pull Request has a valid `pr.base`.
+- The source branch and remote repository are correct.
 
-# 📜 Classic Markdown Workflow (V1)
+The `pr` object is omitted when `PRs.createPRs` is `false`.
 
-Prefer reading the AI analysis and manually executing commands?
+## Configuration Reference
 
-Use:
+`vibe-git.config.json` controls generation behavior.
+
+| Setting | Accepted values | Description |
+| --- | --- | --- |
+| `aiProvider` | `gemini`, `openai`, `groq` | Selects the AI adapter. |
+| `disableWarns` | `true`, `false` | Hides warning-level terminal messages when enabled. |
+| `commits.useConventionalCommits` | `true`, `false` | Enables Conventional Commit messages. |
+| `commits.conventionalCommitTypes` | Array of strings | Types the AI may use when Conventional Commits are enabled. |
+| `commits.idioma` | Language string such as `en` or `pt-BR` | Language used for commit messages. |
+| `PRs.createPRs` | `true`, `false` | Includes or omits PR data in generated plans. |
+| `PRs.model` | Markdown string | Template the AI follows when writing PR descriptions. |
+| `PRs.idioma` | Language string such as `en` or `pt-BR` | Language used for PR content. |
+| `llm-gemini-model.modelName` | Gemini model name | Model used by the Gemini adapter. |
+| `llm-openai-model.modelName` | OpenAI model name | Model used by the OpenAI adapter. |
+| `llm-groq-model.modelName` | Groq model name | Model used by the Groq adapter. |
+
+## Creating a GitHub Token
+
+`GITHUB_TOKEN` is only needed when `exec` creates Pull Requests. GitHub recommends fine-grained personal access tokens with the minimum required permissions.
+
+1. Open [GitHub Settings > Developer settings > Personal access tokens > Fine-grained tokens](https://github.com/settings/personal-access-tokens).
+2. Select **Generate new token**.
+3. Enter a descriptive name and choose a short expiration period.
+4. Under **Resource owner**, select the account or organization that owns the repository.
+5. Under **Repository access**, select only the repositories that `vibe-git` should access.
+6. Under **Repository permissions**, set **Pull requests** to **Read and write**.
+7. Select **Generate token**, copy it immediately, and add it to the project `.env`:
+
+```env
+GITHUB_TOKEN=github_pat_your_token
+```
+
+Organizations may require approval before a fine-grained token can access their repositories. See GitHub's guides for [managing personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) and the [Create a pull request API permission](https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request).
+
+> [!IMPORTANT]
+> Never commit `.env` or share its values. The token authenticates PR creation through the GitHub API; pushing branches still uses your existing Git credentials.
+
+## Automatic Workflow Details
+
+`vibe-git exec` performs the following operations for each branch:
+
+1. Runs `git checkout -b "<branch>"`, or checks out the branch if it already exists.
+2. Runs `git add "<file>"` for every file in each commit.
+3. Runs `git commit -m "<message>"`.
+4. Runs `git push origin "<branch>"`.
+5. Optionally creates the configured Pull Request.
+
+Between branches, it checks out the plan's `sourceBranch`. Use `--ignore-pr` when you only want branches, commits, and pushes.
+
+## Classic Markdown Workflow
+
+Use `plan` when you want AI-generated guidance without automatic execution:
 
 ```bash
 vibe-git plan example.json
 ```
 
-This generates a readable Markdown file:
+The command creates `vibe-git/exit/<exitName>.md` containing:
 
-```txt
-my-plan.md
-```
+- A concise dependency-layer analysis.
+- A Git execution script.
+- Pull Request content when enabled in the config.
 
-Containing:
+## Troubleshooting
 
-- AI analysis
-- Commit strategy
-- Ready-to-run bash script
+| Problem | What to check |
+| --- | --- |
+| `Config file not found` | Run `vibe-git init` from the repository root. |
+| `No template file provided` | Pass a filename that exists inside `vibe-git/entry/`. |
+| `AI returned invalid JSON` | Run `vibe-git run` again or switch to a model that reliably returns JSON. |
+| `Pull Requests without a target branch` | Set `prBase` in the entry file or edit every generated `pr.base`. |
+| `GITHUB_TOKEN is not set` | Add the token to `.env`, or execute with `--ignore-pr`. |
+| Push fails | Confirm `origin`, branch permissions, and your Git credentials. |
+| GitHub API returns `403` | Confirm the token can access the repository and has **Pull requests: Read and write** permission. |
 
----
-
-# ⚙️ Advanced Configuration (`vibe-git.config.json`)
-
-vibe-git is highly customizable.
-
-Example:
-
-```json
-{
-  "aiProvider": "gemini",
-  "disableWarns": false,
-  "commits": {
-    "useConventionalCommits": true
-  },
-  "PRs": {
-    "createPRs": true,
-    "model": ""
-  }
-}
-```
-
----
-
-## Available Settings
-
-### `aiProvider`
-
-Switch between:
-
-- `gemini`
-- `openai`
-- `groq`
-
----
-
-### `disableWarns`
-
-Set to `true` to hide minor terminal warnings.
-
----
-
-### `commits.useConventionalCommits`
-
-Forces the AI to follow conventional commit standards:
-
-```txt
-feat:
-fix:
-refactor:
-docs:
-```
-
----
-
-### `PRs.createPRs`
-
-Enables structured Pull Request generation.
-
----
-
-### `PRs.model`
-
-Paste your company's Pull Request template here.  
-The AI will follow the same format automatically.
-
----
-
-# 💻 Architecture & Engineering
-
-vibe-git is built using:
-
-- Clean Architecture
-- SOLID principles
-- Dependency Inversion
-- Adapter & Factory patterns
-
-Making it scalable and maintainable.
-
----
-
-## Design Philosophy
-
-### Spec-Driven Architecture
-
-LLMs are encapsulated through the Strategy Pattern.
-
-Adding support for another provider (like Anthropic Claude) only requires implementing a new adapter.
-
----
-
-### Fail-Fast Security
-
-The `exec` command contains paranoid safety checkpoints.
-
-Execution is blocked unless:
-
-- The JSON is fully valid
-- The target PR base branch is explicitly defined
-
----
-
-# 🤝 Contributing
+## Development
 
 ```bash
-git clone https://github.com/igoralbuquerque12/vibe-git.git
-
-cd vibe-git
-
 npm install
-
-npm link
+npm test
+node bin/cli.js init
 ```
 
----
+The project uses ES Modules, the native Node.js test runner, and `#...` import aliases mapped to `src/`.
 
-# 📄 License
+## License
 
-MIT License — free to use, modify, and distribute.
-
-Built with a strong focus on Developer Experience.
+[MIT](LICENSE)

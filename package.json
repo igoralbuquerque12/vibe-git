@@ -5,7 +5,7 @@
   "main": "bin/cli.js",
   "type": "module",
   "bin": {
-    "vibe-git": "./bin/cli.js"
+    "vibe-git": "bin/cli.js"
   },
   "files": [
     "bin",
