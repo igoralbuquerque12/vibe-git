@@ -55,7 +55,32 @@ async function executeCommit(commit, index, total) {
   }
 }
 
-async function executeBranch(branch, index, total, { ignorePR, repoInfo }) {
+export async function shouldCreatePullRequest(
+  branch,
+  autoCreatePR,
+  createInterface = readline.createInterface
+) {
+  if (autoCreatePR) {
+    return true;
+  }
+
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  try {
+    const answer = await rl.question(
+      chalk.yellow(`\nBranch "${branch.branchName}" has a PR defined. Do you want to create the PR now to ${branch.pr.base}? (y/n): `)
+    );
+
+    return answer.trim().toLowerCase() === "y";
+  } finally {
+    rl.close();
+  }
+}
+
+async function executeBranch(branch, index, total, { ignorePR, repoInfo, autoCreatePR }) {
   logger.step(`[Branch ${index + 1}/${total}] ${branch.branchName}`);
 
   try {
@@ -89,18 +114,9 @@ async function executeBranch(branch, index, total, { ignorePR, repoInfo }) {
   }
 
   if (branch.pr && !ignorePR) {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
+    const createPR = await shouldCreatePullRequest(branch, autoCreatePR);
 
-    const answer = await rl.question(
-      chalk.yellow(`\nBranch "${branch.branchName}" has a PR defined. Do you want to create the PR now to ${branch.pr.base}? (y/n): `)
-    );
-
-    rl.close();
-
-    if (answer.trim().toLowerCase() === "y") {
+    if (createPR) {
       try {
         logger.step(`Creating Pull Request for ${branch.branchName}...`);
         await createPullRequest({
@@ -137,6 +153,8 @@ export class ExecutePlanUseCase {
       }
 
       const ignorePR = flags.includes("--ignore-pr");
+      const autoCreatePR = flags.includes("--auto-create-pr");
+
       validatePlan(plan, ignorePR);
 
       const sourceBranch = plan.sourceBranch || getCurrentBranch();
@@ -155,6 +173,7 @@ export class ExecutePlanUseCase {
         await executeBranch(plan.branches[i], i, plan.branches.length, {
           ignorePR,
           repoInfo,
+          autoCreatePR
         });
 
         if (i == plan.branches.length - 1) {

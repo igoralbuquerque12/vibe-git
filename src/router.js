@@ -21,7 +21,7 @@ export async function bootstrap(args) {
         }
         default:
             logger.warn(
-                "Use: vibe-git init | run [file] | plan [file] | exec [file] [--ignore-pr]"
+                "Use: vibe-git init | run [file] | plan [file] | exec [file] [--ignore-pr] [--auto-create-pr]"
             );
     }
 }

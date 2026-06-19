@@ -1,18 +1,18 @@
 {
   "name": "@igoralbuquerque/vibe-git",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Gerador de mensagens de commit utilizando IA.",
   "main": "bin/cli.js",
   "type": "module",
   "bin": {
-    "vibe-git": "./bin/cli.js"
+    "vibe-git": "bin/cli.js"
   },
   "files": [
     "bin",
     "src"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test"
   },
   "repository": {
     "type": "git",
