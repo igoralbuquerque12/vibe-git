@@ -1,6 +1,7 @@
 import { GeminiAdapter } from "#providers/ai/adapters/gemini.adapter";
 import { GroqAdapter } from "#providers/ai/adapters/groq.adapter";
 import { OpenAIAdapter } from "#providers/ai/adapters/openai.adapter";
+import { RetryAiAdapter } from "#providers/ai/adapters/retry.adapter";
 
 export class AiProviderFactory {
   static create(config) {
@@ -11,19 +12,19 @@ export class AiProviderFactory {
         const apiKey = getAIApiKey("openai");
         const modelName = getAIModelName("openai", config);
 
-        return new OpenAIAdapter(apiKey, modelName);
+        return new RetryAiAdapter(new OpenAIAdapter(apiKey, modelName));
       }
       case "groq": {
         const apiKey = getAIApiKey("groq");
         const modelName = getAIModelName("groq", config);
 
-        return new GroqAdapter(apiKey, modelName);
+        return new RetryAiAdapter(new GroqAdapter(apiKey, modelName));
       }
       case "gemini": {
         const apiKey = getAIApiKey("gemini");
         const modelName = getAIModelName("gemini", config);
 
-        return new GeminiAdapter(apiKey, modelName);
+        return new RetryAiAdapter(new GeminiAdapter(apiKey, modelName));
       }
       default:
         throw new Error(
