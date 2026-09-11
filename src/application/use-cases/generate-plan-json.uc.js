@@ -10,7 +10,10 @@ import {
   getConfigPath,
   readJson,
   saveJson,
+  withFileExtension,
 } from "#shared/filesystem";
+import { systemPrompt } from "#constants/fixed-prompt";
+import { formatTokenUsage, normalizeAiResponse } from "#providers/ai/ai-response";
 import logger from "#shared/logger";
 import path from "path";
 
@@ -36,7 +39,8 @@ export class GeneratePlanJsonUseCase {
         throw new Error("No template file provided.");
       }
 
-      const templatePath = `vibe-git/entry/${fileDestination}`;
+      const templateFile = withFileExtension(fileDestination, ".json");
+      const templatePath = `vibe-git/entry/${templateFile}`;
       const template = await readJson(templatePath);
 
       if (!template) {
@@ -52,8 +56,10 @@ export class GeneratePlanJsonUseCase {
       }
 
       const prompt = buildRunPrompt({ config, template, diff, untracked });
-      const rawResponse = await this.aiProvider.generateContent(prompt);
-      const parsed = parseJsonResponse(rawResponse);
+      const response = normalizeAiResponse(
+        await this.aiProvider.generateContent(prompt, systemPrompt)
+      );
+      const parsed = parseJsonResponse(response.content);
 
       const output = {
         generatedAt: new Date().toISOString(),
@@ -62,13 +68,15 @@ export class GeneratePlanJsonUseCase {
       };
 
       const exitName = template.exitName
-        ? `${template.exitName}.json`
+        ? withFileExtension(template.exitName, ".json")
         : `plan-${Date.now()}.json`;
       const targetDir = await ensureDir("vibe-git/exit");
       const filePath = path.join(targetDir, exitName);
 
       await saveJson(filePath, output);
-      logger.success(`Editable JSON plan generated at: ${filePath}`);
+      logger.success(
+        `Editable JSON plan generated at: ${filePath} (${formatTokenUsage(response.usage)})`
+      );
     } catch (error) {
       logger.error(`Failed to generate JSON plan: ${error.message}`);
     }
