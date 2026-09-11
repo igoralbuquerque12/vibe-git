@@ -13,6 +13,19 @@ export const getUserDir = () => process.cwd();
 export const getFullPath = fileName => path.join(getUserDir(), fileName);
 
 /**
+ * Adds a file extension when it was omitted by the user.
+ * @param {string} fileName
+ * @param {string} extension
+ */
+export const withFileExtension = (fileName, extension) => {
+  if (!fileName || fileName.toLowerCase().endsWith(extension.toLowerCase())) {
+    return fileName;
+  }
+
+  return `${fileName}${extension}`;
+};
+
+/**
  * Constructs the path for the config file.
  */
 export const getConfigPath = (fileName = "vibe-git.config.json") => {
