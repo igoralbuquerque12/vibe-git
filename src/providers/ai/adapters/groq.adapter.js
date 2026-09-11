@@ -1,7 +1,7 @@
 /**
  * Adapter for the Groq API.
  *
- * @implements {{ generateContent(prompt: string): Promise<string> }}
+ * @implements {{ generateContent(prompt: string, systemPrompt?: string): Promise<object> }}
  */
 export class GroqAdapter {
   constructor(apiKey, modelName) {
@@ -11,9 +11,18 @@ export class GroqAdapter {
 
   /**
    * @param {string} prompt
-   * @returns {Promise<string>}
+   * @param {string} systemPrompt
+   * @returns {Promise<object>}
    */
-  async generateContent(prompt) {
+  async generateContent(prompt, systemPrompt) {
+    const messages = [];
+
+    if (systemPrompt) {
+      messages.push({ role: "system", content: systemPrompt });
+    }
+
+    messages.push({ role: "user", content: prompt });
+
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -24,12 +33,7 @@ export class GroqAdapter {
         },
         body: JSON.stringify({
           model: this.modelName,
-          messages: [
-            {
-              role: "user",
-              content: prompt,
-            },
-          ],
+          messages,
         }),
       }
     );
@@ -48,6 +52,13 @@ export class GroqAdapter {
       throw new Error("Groq API returned an empty response.");
     }
 
-    return content;
+    return {
+      content,
+      usage: {
+        inputTokens: data.usage?.prompt_tokens,
+        outputTokens: data.usage?.completion_tokens,
+        totalTokens: data.usage?.total_tokens,
+      },
+    };
   }
 }

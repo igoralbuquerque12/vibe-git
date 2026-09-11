@@ -1,7 +1,7 @@
 /**
  * Adapter for the Gemini API.
  *
- * @implements {{ generateContent(prompt: string): Promise<string> }}
+ * @implements {{ generateContent(prompt: string, systemPrompt?: string): Promise<object> }}
  */
 export class GeminiAdapter {
   constructor(apiKey, modelName) {
@@ -11,9 +11,28 @@ export class GeminiAdapter {
 
   /**
    * @param {string} prompt
-   * @returns {Promise<string>}
+   * @param {string} systemPrompt
+   * @returns {Promise<object>}
    */
-  async generateContent(prompt) {
+  async generateContent(prompt, systemPrompt) {
+    const body = {
+      contents: [
+        {
+          parts: [
+            {
+              text: prompt,
+            },
+          ],
+        },
+      ],
+    };
+
+    if (systemPrompt) {
+      body.system_instruction = {
+        parts: [{ text: systemPrompt }],
+      };
+    }
+
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${this.modelName}:generateContent`,
       {
@@ -22,17 +41,7 @@ export class GeminiAdapter {
           "Content-Type": "application/json",
           "x-goog-api-key": this.apiKey,
         },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt,
-                },
-              ],
-            },
-          ],
-        }),
+        body: JSON.stringify(body),
       }
     );
 
@@ -52,6 +61,15 @@ export class GeminiAdapter {
       throw new Error("Gemini API returned an empty response.");
     }
 
-    return text;
+    const usage = data.usageMetadata || data.usage_metadata || {};
+
+    return {
+      content: text,
+      usage: {
+        inputTokens: usage.promptTokenCount ?? usage.prompt_token_count,
+        outputTokens: usage.candidatesTokenCount ?? usage.candidates_token_count,
+        totalTokens: usage.totalTokenCount ?? usage.total_token_count,
+      },
+    };
   }
 }

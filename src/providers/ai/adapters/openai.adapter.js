@@ -1,7 +1,7 @@
 /**
  * Adapter for the OpenAI API.
  *
- * @implements {{ generateContent(prompt: string): Promise<string> }}
+ * @implements {{ generateContent(prompt: string, systemPrompt?: string): Promise<object> }}
  */
 export class OpenAIAdapter {
   constructor(apiKey, modelName) {
@@ -11,9 +11,18 @@ export class OpenAIAdapter {
 
   /**
    * @param {string} prompt
-   * @returns {Promise<string>}
+   * @param {string} systemPrompt
+   * @returns {Promise<object>}
    */
-  async generateContent(prompt) {
+  async generateContent(prompt, systemPrompt) {
+    const messages = [];
+
+    if (systemPrompt) {
+      messages.push({ role: "system", content: systemPrompt });
+    }
+
+    messages.push({ role: "user", content: prompt });
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -22,12 +31,7 @@ export class OpenAIAdapter {
       },
       body: JSON.stringify({
         model: this.modelName,
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
+        messages,
       }),
     });
 
@@ -45,6 +49,13 @@ export class OpenAIAdapter {
       throw new Error("OpenAI API returned an empty response.");
     }
 
-    return content;
+    return {
+      content,
+      usage: {
+        inputTokens: data.usage?.input_tokens ?? data.usage?.prompt_tokens,
+        outputTokens: data.usage?.output_tokens ?? data.usage?.completion_tokens,
+        totalTokens: data.usage?.total_tokens,
+      },
+    };
   }
 }
