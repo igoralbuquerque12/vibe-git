@@ -49,3 +49,5 @@ export const gitCommit = message =>
   exec(`git commit -m "${message.replace(/"/g, '\\"')}"`);
 
 export const gitPush = branchName => exec(`git push origin "${branchName}"`);
+
+export const gitStatus = () => exec("git status --short");

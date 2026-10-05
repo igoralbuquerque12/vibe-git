@@ -9,6 +9,8 @@ An AI-powered CLI that turns your repository changes into an atomic commit plan,
 - An editable JSON plan that can be executed automatically.
 - A Markdown plan with a ready-to-run Git script for manual execution.
 
+AI requests are attempted up to three times, with a five-second interval after a failed attempt. Successful plan logs include the input, output, and total token counts reported by the provider.
+
 The automatic workflow can:
 
 - Split changes into one or more branches.
@@ -116,7 +118,7 @@ Edit `vibe-git/entry/example.json`:
 ### 4. Generate and review an executable plan
 
 ```bash
-vibe-git run example.json
+vibe-git run example
 ```
 
 This generates `vibe-git/exit/feature-auth-plan.json`. Review and edit that file before continuing.
@@ -124,7 +126,7 @@ This generates `vibe-git/exit/feature-auth-plan.json`. Review and edit that file
 ### 5. Execute the plan
 
 ```bash
-vibe-git exec feature-auth-plan.json
+vibe-git exec feature-auth-plan
 ```
 
 For every branch in the plan, `exec` creates or checks out the branch, stages the listed files, commits them, pushes the branch, and asks whether to create its Pull Request.
@@ -133,9 +135,9 @@ For every branch in the plan, `exec` creates or checks out the branch, stages th
 
 ```text
 vibe-git init
-vibe-git run <entry-file.json>
-vibe-git plan <entry-file.json>
-vibe-git exec <exit-file.json> [--ignore-pr] [--auto-create-pr]
+vibe-git run <entry-file>
+vibe-git plan <entry-file>
+vibe-git exec <exit-file> [--ignore-pr] [--auto-create-pr]
 ```
 
 Running `vibe-git` without a valid command prints this usage summary.
@@ -143,9 +145,9 @@ Running `vibe-git` without a valid command prints this usage summary.
 | Command | Parameters | Result |
 | --- | --- | --- |
 | `vibe-git init` | None | Creates the config, `.env`, and `vibe-git/entry` and `vibe-git/exit` workspace. Existing generated config and example files are overwritten. |
-| `vibe-git run <entry-file.json>` | Required entry filename | Generates an editable JSON execution plan in `vibe-git/exit/`. |
-| `vibe-git plan <entry-file.json>` | Required entry filename | Generates a Markdown analysis and Git script in `vibe-git/exit/`. It does not execute Git commands. |
-| `vibe-git exec <exit-file.json>` | Required exit filename; optional flags below | Executes an existing JSON plan from `vibe-git/exit/`. |
+| `vibe-git run <entry-file>` | Required entry filename, with or without `.json` | Generates an editable JSON execution plan in `vibe-git/exit/`. |
+| `vibe-git plan <entry-file>` | Required entry filename, with or without `.json` | Generates a Markdown analysis and Git script in `vibe-git/exit/`. It does not execute Git commands. |
+| `vibe-git exec <exit-file>` | Required exit filename, with or without `.json`; optional flags below | Executes an existing JSON plan from `vibe-git/exit/`. |
 
 ### `exec` flags
 
@@ -157,8 +159,8 @@ Running `vibe-git` without a valid command prints this usage summary.
 Flags must be placed after the plan filename:
 
 ```bash
-vibe-git exec feature-auth-plan.json --ignore-pr
-vibe-git exec feature-auth-plan.json --auto-create-pr
+vibe-git exec feature-auth-plan --ignore-pr
+vibe-git exec feature-auth-plan --auto-create-pr
 ```
 
 If both flags are provided, `--ignore-pr` takes precedence and no Pull Request is created.

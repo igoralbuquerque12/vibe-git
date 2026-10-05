@@ -1,6 +1,13 @@
 import { gitDiff, untrackedFiles } from "#services/git";
 import { buildPlanPrompt } from "#builders/prompt";
-import { getConfigPath, readJson, saveMarkdown } from "#shared/filesystem";
+import { systemPrompt } from "#constants/fixed-prompt";
+import { formatTokenUsage, normalizeAiResponse } from "#providers/ai/ai-response";
+import {
+  getConfigPath,
+  readJson,
+  saveMarkdown,
+  withFileExtension,
+} from "#shared/filesystem";
 import logger from "#shared/logger";
 
 export class GeneratePlanMarkdownUseCase {
@@ -25,7 +32,8 @@ export class GeneratePlanMarkdownUseCase {
         throw new Error("No template file provided.");
       }
 
-      const templatePath = `vibe-git/entry/${fileDestination}`;
+      const templateFile = withFileExtension(fileDestination, ".json");
+      const templatePath = `vibe-git/entry/${templateFile}`;
       const template = await readJson(templatePath);
 
       if (!template) {
@@ -41,14 +49,22 @@ export class GeneratePlanMarkdownUseCase {
       }
 
       const prompt = buildPlanPrompt({ config, template, diff, untracked });
-      const plan = await this.aiProvider.generateContent(prompt);
+      const response = normalizeAiResponse(
+        await this.aiProvider.generateContent(prompt, systemPrompt)
+      );
 
       const exitName = template.exitName
         ? `${template.exitName}.md`
         : `plan-${Date.now()}.md`;
-      const finalPath = await saveMarkdown("vibe-git/exit", exitName, plan);
+      const finalPath = await saveMarkdown(
+        "vibe-git/exit",
+        exitName,
+        response.content
+      );
 
-      logger.success(`Markdown plan generated at: ${finalPath}`);
+      logger.success(
+        `Markdown plan generated at: ${finalPath} (${formatTokenUsage(response.usage)})`
+      );
     } catch (error) {
       logger.error(`Failed to generate Markdown plan: ${error.message}`);
     }

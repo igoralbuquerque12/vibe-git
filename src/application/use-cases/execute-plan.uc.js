@@ -11,7 +11,7 @@ import {
   gitPush,
 } from "#services/git";
 import { createPullRequest } from "#services/github";
-import { readJson } from "#shared/filesystem";
+import { readJson, withFileExtension } from "#shared/filesystem";
 import logger from "#shared/logger";
 
 function validatePlan(plan, ignorePR) {
@@ -145,7 +145,8 @@ export class ExecutePlanUseCase {
         throw new Error("No plan file provided.");
       }
 
-      const planPath = `vibe-git/exit/${fileDestination}`;
+      const planFile = withFileExtension(fileDestination, ".json");
+      const planPath = `vibe-git/exit/${planFile}`;
       const plan = await readJson(planPath);
 
       if (!plan) {
