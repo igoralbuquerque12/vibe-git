@@ -90,6 +90,7 @@ The JSON must strictly follow this schema:
         "body": "string - full PR body following the provided template. Use \\n for line breaks.",
         "base": "string - target base branch (default: main)"
       },
+      "prHistory": [],
       "commits": [
         {
           "message": "string - conventional commit message",
@@ -102,6 +103,7 @@ The JSON must strictly follow this schema:
 
 RULES:
 - "pr" field must be OMITTED entirely if PRs were not requested.
+- "prHistory": MUST return an empty array [] (Node.js will handle history).
 - "files" must contain exact paths from the git diff, never invented paths.
 - Every file from the diff must appear in exactly one commit.
 - Do not wrap the response in markdown code blocks.
