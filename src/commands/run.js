@@ -3,7 +3,7 @@ import { AiProviderFactory } from "#providers/ai/ai.factory";
 import { getConfigPath, readJson } from "#shared/filesystem";
 import logger from "#shared/logger";
 
-export async function run(fileDestination) {
+export async function run(fileDestination, flags = []) {
   try {
     const config = await readJson(getConfigPath());
     if (config?.disableWarns) {
@@ -17,7 +17,7 @@ export async function run(fileDestination) {
     const aiProvider = AiProviderFactory.create(config);
     const useCase = new GeneratePlanJsonUseCase(aiProvider);
 
-    await useCase.execute({ fileDestination });
+    await useCase.execute({ fileDestination, flags });
   } catch (error) {
     logger.error(`Failed to run vibe-git: ${error.message}`);
   }

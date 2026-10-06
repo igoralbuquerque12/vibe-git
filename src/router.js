@@ -8,9 +8,11 @@ export async function bootstrap(args) {
         case "init":
             await init();
             break;
-        case "run":
-            await run(args[1]);
+        case "run": {
+            const flags = args.slice(2);
+            await run(args[1], flags);
             break;
+        }
         case "plan":
             await plan(args[1]);
             break;
@@ -21,7 +23,7 @@ export async function bootstrap(args) {
         }
         default:
             logger.warn(
-                "Use: vibe-git init | run [file] | plan [file] | exec [file] [--ignore-pr] [--auto-create-pr]"
+                "Use: vibe-git init | run [file] [--ignore-pr-history] | plan [file] | exec [file] [--ignore-pr] [--auto-create-pr]"
             );
     }
 }

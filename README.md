@@ -135,7 +135,7 @@ For every branch in the plan, `exec` creates or checks out the branch, stages th
 
 ```text
 vibe-git init
-vibe-git run <entry-file>
+vibe-git run <entry-file> [--ignore-pr-history]
 vibe-git plan <entry-file>
 vibe-git exec <exit-file> [--ignore-pr] [--auto-create-pr]
 ```
@@ -145,9 +145,17 @@ Running `vibe-git` without a valid command prints this usage summary.
 | Command | Parameters | Result |
 | --- | --- | --- |
 | `vibe-git init` | None | Creates the config, `.env`, and `vibe-git/entry` and `vibe-git/exit` workspace. Existing generated config and example files are overwritten. |
-| `vibe-git run <entry-file>` | Required entry filename, with or without `.json` | Generates an editable JSON execution plan in `vibe-git/exit/`. |
+| `vibe-git run <entry-file>` | Required entry filename, with or without `.json`; optional flag below | Generates an editable JSON execution plan in `vibe-git/exit/`. |
 | `vibe-git plan <entry-file>` | Required entry filename, with or without `.json` | Generates a Markdown analysis and Git script in `vibe-git/exit/`. It does not execute Git commands. |
 | `vibe-git exec <exit-file>` | Required exit filename, with or without `.json`; optional flags below | Executes an existing JSON plan from `vibe-git/exit/`. |
+
+### `run` flags
+
+| Flag | Behavior |
+| --- | --- |
+| `--ignore-pr-history` | Generates the plan from scratch, ignoring any existing Pull Request context. |
+
+By default, `run` generates PR descriptions incrementally. For each branch it looks for an existing PR body, first in the open Pull Request on GitHub (requires `GITHUB_TOKEN`; skipped silently when unavailable) and then in the previous plan at the same `vibe-git/exit/` path. The AI is instructed to merge that body with the new changes instead of discarding it. When a previous plan is overwritten, each branch's former `pr` is archived in its `prHistory` array with an `archivedAt` timestamp.
 
 ### `exec` flags
 
