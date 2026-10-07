@@ -246,11 +246,13 @@ vibe-git exec <arquivo-de-saída> [--ignore-pr] [--auto-create-pr]
 | Flag | Efeito |
 | --- | --- |
 | `--ignore-pr` | Não valida nem cria Pull Requests. Só branches, commits e push. Dispensa o `GITHUB_TOKEN`. |
-| `--auto-create-pr` | Cria todos os PRs do plano sem perguntar. Indicado para ambientes sem terminal interativo. |
+| `--auto-create-pr` | Cria todos os PRs do plano sem perguntar, ou atualiza os que já estão abertos. Indicado para ambientes sem terminal interativo. |
 
-Se as duas flags forem passadas, `--ignore-pr` vence e nenhum PR é criado.
+Se as duas flags forem passadas, `--ignore-pr` vence e nenhum PR é criado nem atualizado.
 
 Sem nenhuma flag, o comando pergunta no terminal, branch por branch, se deve criar o PR. Só a resposta `y` cria; qualquer outra pula.
+
+Se a branch já tem um PR aberto no GitHub, o `exec` não tenta criar outro: a pergunta passa a ser se deve atualizar o PR existente, e a resposta `y` altera apenas o título e o corpo dele com o `pr.title` e o `pr.body` do plano. A branch de destino do PR aberto não é alterada.
 
 ### O que ele faz
 
@@ -259,7 +261,7 @@ Para cada branch do plano, nesta ordem:
 1. Cria a branch com `git checkout -b`. Se ela já existir, faz checkout nela.
 2. Para cada commit: roda `git add` em cada arquivo listado e depois `git commit` com a mensagem do plano.
 3. Roda `git push origin <branch>`.
-4. Se a branch tem `pr` e `--ignore-pr` não foi passada, cria o Pull Request (com ou sem confirmação).
+4. Se a branch tem `pr` e `--ignore-pr` não foi passada, cria o Pull Request ou, se a branch já tem um PR aberto, atualiza o título e o corpo dele (com ou sem confirmação).
 5. Volta para a `sourceBranch` do plano antes de começar a próxima branch.
 
 Depois da última branch o comando não troca de branch: você termina na última branch processada.
@@ -274,7 +276,7 @@ O `exec` não para na primeira falha. Ele registra o problema e segue:
 | Commit sem nada para commitar | Aviso; o commit é pulado. |
 | Push falhou | Erro no terminal; a execução segue para o PR e para a próxima branch. |
 | Checkout da branch falhou | Erro no terminal; a branch inteira é pulada. |
-| Criação do PR falhou | Erro no terminal; a execução segue para a próxima branch. |
+| Criação ou atualização do PR falhou | Erro no terminal; a execução segue para a próxima branch. |
 
 Por isso, leia a saída até o fim antes de considerar a execução concluída.
 
@@ -459,6 +461,9 @@ vibe-git plan example
 # novas alterações na mesma branch
 vibe-git run example
 # o novo pr.body parte do corpo do PR aberto ou do plano anterior
+
+vibe-git exec feature-auth-plan
+# os novos commits sobem para a branch e o PR aberto recebe o novo título e corpo
 ```
 
 ## Solução de problemas

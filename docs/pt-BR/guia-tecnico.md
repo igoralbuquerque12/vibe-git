@@ -1,14 +1,10 @@
-# Automatizador de commits e PRs usando node.js cli
+# Como o vibe-git funciona por dentro
 
-*Como o vibe-git transforma um diff bagunçado em commits atômicos, branches e Pull Requests com a ajuda de um LLM.*
+Este guia explica a arquitetura e as decisões de design do **vibe-git**, um CLI em Node.js que automatiza a divisão de alterações em commits, branches e Pull Requests com a ajuda de um modelo de linguagem.
 
----
+O cenário que ele resolve é conhecido: a feature está pronta, os testes passam e o `git status` mostra vinte e três arquivos alterados. O ideal seria separar tudo em commits pequenos, na ordem em que as coisas dependem umas das outras, e escrever um Pull Request que explique o que mudou. Na prática, o que costuma acontecer é um `git add .` seguido de `git commit -m "ajustes"`.
 
-Todo mundo conhece o momento: a feature está pronta, os testes passam e o `git status` mostra vinte e três arquivos alterados. O certo seria separar tudo em commits pequenos, na ordem em que as coisas dependem umas das outras, e escrever um Pull Request que explique o que mudou. O que costuma acontecer é um `git add .` seguido de `git commit -m "ajustes"`.
-
-O **vibe-git** é um CLI em Node.js que automatiza essa parte. Ele lê as alterações do repositório, pede a um modelo de linguagem um plano de commits e depois executa esse plano: cria as branches, faz os commits, dá push e abre os PRs.
-
-Neste artigo explico como ele funciona por dentro e quais decisões de design fazem a diferença entre "pedir para a IA escrever um commit" e ter uma ferramenta em que dá para confiar.
+O vibe-git lê as alterações do repositório, pede a um modelo de linguagem um plano de commits e depois executa esse plano: cria as branches, faz os commits, dá push e abre os PRs.
 
 ## A ideia central: a IA planeja, o código executa
 
@@ -134,11 +130,11 @@ case "gemini": {
 
 Repare no `RetryAiAdapter`. Ele é um *decorator*: tem o mesmo método dos adapters e embrulha qualquer um deles com até três tentativas, esperando cinco segundos entre elas. O caso de uso não sabe que existe retentativa, nem qual provedor está do outro lado.
 
-Adicionar um provedor novo é escrever um adapter e registrar uma linha na factory.
+Para adicionar um provedor novo, escreva um adapter e registre uma linha na factory.
 
 ## Montando o prompt
 
-Aqui está a parte mais delicada. O prompt carrega muita coisa: o papel do modelo, as regras de commit, as instruções de PR, o resumo do usuário, as branches, o diff e o formato de saída.
+Esta é a parte mais delicada. O prompt carrega muita coisa: o papel do modelo, as regras de commit, as instruções de PR, o resumo do usuário, as branches, o diff e o formato de saída.
 
 O diff é, de longe, o maior bloco. Em uma feature grande ele ocupa quase todo o prompt. E modelos de linguagem tendem a dar menos atenção ao que fica no meio de um contexto longo, um efeito conhecido como *Lost in the Middle*. Se as regras ficarem antes do diff, elas estarão longe demais quando o modelo começar a escrever a resposta.
 
@@ -227,12 +223,14 @@ O `exec` lê o JSON e percorre as branches. Para cada uma:
 1. cria a branch, ou faz checkout se ela já existe;
 2. para cada commit, roda `git add` nos arquivos e `git commit` com a mensagem;
 3. roda `git push origin <branch>`;
-4. cria o Pull Request pela API do GitHub;
+4. cria o Pull Request pela API do GitHub, ou atualiza o título e o corpo do PR que já está aberto para a branch;
 5. volta para a branch de origem antes da próxima.
 
 Antes de qualquer comando há uma validação: um plano sem branches, ou com um PR sem branch de destino, é recusado. Daí em diante o executor é tolerante: um arquivo que não existe vira aviso, um commit vazio é pulado, e uma falha de push é registrada sem interromper as outras branches.
 
 A criação de PR tem três modos. Por padrão o CLI pergunta, branch por branch. Com `--auto-create-pr` ele cria tudo sem perguntar, o que serve para rodar sem terminal interativo. Com `--ignore-pr` ele não toca no GitHub.
+
+Antes de perguntar, o `exec` consulta o GitHub pelo PR aberto da branch, com a mesma função que o `run` usa para os PRs incrementais. Se existe um, ele não tenta criar outro (o GitHub recusaria): faz um `PATCH` só com título e corpo. É o que fecha o ciclo dos PRs incrementais, já que o `run` gera a descrição mesclada e o `exec` a publica no PR existente.
 
 A confirmação foi escrita para ser testável. A função recebe a fábrica do `readline` como parâmetro:
 
@@ -240,13 +238,14 @@ A confirmação foi escrita para ser testável. A função recebe a fábrica do 
 export async function shouldCreatePullRequest(
   branch,
   autoCreatePR,
-  createInterface = readline.createInterface
+  createInterface = readline.createInterface,
+  existingPr = null
 ) {
 ```
 
-Nos testes, basta passar uma interface falsa que responde "y" ou "n". Nenhum teste precisa de terminal, de repositório ou de rede.
+Nos testes, basta passar uma interface falsa que responde "y" ou "n". Nenhum teste precisa de terminal, de repositório ou de rede. A decisão entre criar e atualizar segue a mesma ideia: `syncPullRequest` recebe as funções de consulta, criação e atualização como dependências injetáveis.
 
-## O que fica de lição
+## Princípios que guiam o design
 
 Três ideias do vibe-git servem para qualquer ferramenta que coloque um LLM num fluxo de trabalho real:
 
@@ -256,7 +255,7 @@ Três ideias do vibe-git servem para qualquer ferramenta que coloque um LLM num 
 
 O resto é Node.js sem mistério: um `switch`, alguns `execSync`, `fetch` e um punhado de funções pequenas.
 
-## Para experimentar
+## Como experimentar
 
 ```bash
 npm install -g @igoralbuquerque/vibe-git

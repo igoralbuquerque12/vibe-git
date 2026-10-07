@@ -246,11 +246,13 @@ vibe-git exec <exit-file> [--ignore-pr] [--auto-create-pr]
 | Flag | Effect |
 | --- | --- |
 | `--ignore-pr` | Does not validate or create Pull Requests. Only branches, commits and push. `GITHUB_TOKEN` is not needed. |
-| `--auto-create-pr` | Creates every PR in the plan without asking. Intended for environments without an interactive terminal. |
+| `--auto-create-pr` | Creates every PR in the plan without asking, or updates the ones that are already open. Intended for environments without an interactive terminal. |
 
-If both flags are passed, `--ignore-pr` wins and no PR is created.
+If both flags are passed, `--ignore-pr` wins and no PR is created or updated.
 
 With no flags, the command asks in the terminal, branch by branch, whether it should create the PR. Only the answer `y` creates it; anything else skips it.
+
+If the branch already has an open PR on GitHub, `exec` does not try to create another one: the question becomes whether it should update the existing PR, and the answer `y` changes only its title and body with the plan's `pr.title` and `pr.body`. The target branch of the open PR is not changed.
 
 ### What it does
 
@@ -259,7 +261,7 @@ For each branch in the plan, in this order:
 1. Creates the branch with `git checkout -b`. If it already exists, checks it out.
 2. For each commit: runs `git add` on each listed file and then `git commit` with the message from the plan.
 3. Runs `git push origin <branch>`.
-4. If the branch has a `pr` and `--ignore-pr` was not passed, creates the Pull Request (with or without confirmation).
+4. If the branch has a `pr` and `--ignore-pr` was not passed, creates the Pull Request or, if the branch already has an open PR, updates its title and body (with or without confirmation).
 5. Returns to the plan's `sourceBranch` before starting the next branch.
 
 After the last branch the command does not switch branches: you end up on the last branch processed.
@@ -274,7 +276,7 @@ After the last branch the command does not switch branches: you end up on the la
 | Commit with nothing to commit | Warning; the commit is skipped. |
 | Push failed | Error in the terminal; execution moves on to the PR and to the next branch. |
 | Branch checkout failed | Error in the terminal; the whole branch is skipped. |
-| PR creation failed | Error in the terminal; execution moves on to the next branch. |
+| PR creation or update failed | Error in the terminal; execution moves on to the next branch. |
 
 For that reason, read the output to the end before considering the execution complete.
 
@@ -459,6 +461,9 @@ vibe-git plan example
 # new changes on the same branch
 vibe-git run example
 # the new pr.body starts from the body of the open PR or of the previous plan
+
+vibe-git exec feature-auth-plan
+# the new commits are pushed to the branch and the open PR gets the new title and body
 ```
 
 ## Troubleshooting

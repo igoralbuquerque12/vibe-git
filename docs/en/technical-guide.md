@@ -1,14 +1,10 @@
-# Automating commits and PRs with a Node.js CLI
+# How vibe-git works under the hood
 
-*How vibe-git turns a messy diff into atomic commits, branches and Pull Requests with the help of an LLM.*
+This guide walks through the architecture and design decisions behind **vibe-git**, a Node.js CLI that automates splitting changes into commits, branches and Pull Requests with the help of a language model.
 
----
+The scenario it solves is a familiar one: the feature is done, the tests pass and `git status` shows twenty-three changed files. The right thing would be to split everything into small commits, in the order in which things depend on each other, and write a Pull Request that explains what changed. What usually happens in practice is a `git add .` followed by `git commit -m "fixes"`.
 
-Everyone knows the moment: the feature is done, the tests pass and `git status` shows twenty-three changed files. The right thing would be to split everything into small commits, in the order in which things depend on each other, and write a Pull Request that explains what changed. What usually happens is a `git add .` followed by `git commit -m "fixes"`.
-
-**vibe-git** is a Node.js CLI that automates this part. It reads the changes in the repository, asks a language model for a commit plan and then executes that plan: it creates the branches, makes the commits, pushes and opens the PRs.
-
-In this article I explain how it works on the inside and which design decisions make the difference between "asking the AI to write a commit" and having a tool you can trust.
+vibe-git reads the changes in the repository, asks a language model for a commit plan and then executes that plan: it creates the branches, makes the commits, pushes and opens the PRs.
 
 ## The core idea: the AI plans, the code executes
 
@@ -134,7 +130,7 @@ case "gemini": {
 
 Note the `RetryAiAdapter`. It is a *decorator*: it has the same method as the adapters and wraps any of them with up to three attempts, waiting five seconds between them. The use case does not know that retrying exists, nor which provider is on the other side.
 
-Adding a new provider means writing an adapter and registering one line in the factory.
+To add a new provider, write an adapter and register one line in the factory.
 
 ## Building the prompt
 
@@ -227,12 +223,14 @@ Anyone who wants to start from scratch passes `--ignore-pr-history`.
 1. it creates the branch, or checks it out if it already exists;
 2. for each commit, it runs `git add` on the files and `git commit` with the message;
 3. it runs `git push origin <branch>`;
-4. it creates the Pull Request through the GitHub API;
+4. it creates the Pull Request through the GitHub API, or updates the title and body of the PR already open for the branch;
 5. it returns to the source branch before the next one.
 
 Before any command there is a validation: a plan with no branches, or with a PR without a target branch, is rejected. From there on the executor is tolerant: a file that does not exist becomes a warning, an empty commit is skipped, and a push failure is recorded without interrupting the other branches.
 
 PR creation has three modes. By default the CLI asks, branch by branch. With `--auto-create-pr` it creates everything without asking, which is useful for running without an interactive terminal. With `--ignore-pr` it does not touch GitHub.
+
+Before asking, `exec` looks up the branch's open PR on GitHub, with the same function `run` uses for incremental PRs. If there is one, it does not try to create another (GitHub would reject it): it sends a `PATCH` with only the title and body. This closes the loop on incremental PRs, since `run` generates the merged description and `exec` publishes it to the existing PR.
 
 The confirmation was written to be testable. The function receives the `readline` factory as a parameter:
 
@@ -240,13 +238,14 @@ The confirmation was written to be testable. The function receives the `readline
 export async function shouldCreatePullRequest(
   branch,
   autoCreatePR,
-  createInterface = readline.createInterface
+  createInterface = readline.createInterface,
+  existingPr = null
 ) {
 ```
 
-In the tests, it is enough to pass a fake interface that answers "y" or "n". No test needs a terminal, a repository or the network.
+In the tests, it is enough to pass a fake interface that answers "y" or "n". No test needs a terminal, a repository or the network. The decision between creating and updating follows the same idea: `syncPullRequest` receives the lookup, create and update functions as injectable dependencies.
 
-## Lessons learned
+## Principles behind the design
 
 Three ideas from vibe-git apply to any tool that puts an LLM in a real workflow:
 
