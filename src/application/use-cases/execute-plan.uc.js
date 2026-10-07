@@ -10,7 +10,11 @@ import {
   gitCommit,
   gitPush,
 } from "#services/git";
-import { createPullRequest } from "#services/github";
+import {
+  createPullRequest,
+  getOpenPullRequest,
+  updatePullRequest,
+} from "#services/github";
 import { readJson, withFileExtension } from "#shared/filesystem";
 import logger from "#shared/logger";
 
@@ -58,7 +62,8 @@ async function executeCommit(commit, index, total) {
 export async function shouldCreatePullRequest(
   branch,
   autoCreatePR,
-  createInterface = readline.createInterface
+  createInterface = readline.createInterface,
+  existingPr = null
 ) {
   if (autoCreatePR) {
     return true;
@@ -69,14 +74,74 @@ export async function shouldCreatePullRequest(
     output: process.stdout
   });
 
+  const question = existingPr
+    ? `\nBranch "${branch.branchName}" already has an open PR (#${existingPr.number}). Do you want to update its title and body now? (y/n): `
+    : `\nBranch "${branch.branchName}" has a PR defined. Do you want to create the PR now to ${branch.pr.base}? (y/n): `;
+
   try {
-    const answer = await rl.question(
-      chalk.yellow(`\nBranch "${branch.branchName}" has a PR defined. Do you want to create the PR now to ${branch.pr.base}? (y/n): `)
-    );
+    const answer = await rl.question(chalk.yellow(question));
 
     return answer.trim().toLowerCase() === "y";
   } finally {
     rl.close();
+  }
+}
+
+export async function syncPullRequest(
+  branch,
+  { repoInfo, autoCreatePR },
+  {
+    getOpenPR = getOpenPullRequest,
+    createPR = createPullRequest,
+    updatePR = updatePullRequest,
+    confirm = shouldCreatePullRequest,
+  } = {}
+) {
+  const existingPr = await getOpenPR({
+    owner: repoInfo.owner,
+    repo: repoInfo.repo,
+    branchName: branch.branchName,
+  });
+
+  const confirmed = await confirm(branch, autoCreatePR, undefined, existingPr);
+
+  if (!confirmed) {
+    logger.info(
+      existingPr
+        ? `PR update skipped for branch "${branch.branchName}". You can update it manually later.`
+        : `PR creation skipped for branch "${branch.branchName}". You can create it manually later.`
+    );
+    return;
+  }
+
+  if (existingPr) {
+    try {
+      logger.step(`Updating Pull Request #${existingPr.number} for ${branch.branchName}...`);
+      await updatePR({
+        owner: repoInfo.owner,
+        repo: repoInfo.repo,
+        number: existingPr.number,
+        title: branch.pr.title,
+        body: branch.pr.body,
+      });
+    } catch (error) {
+      logger.error(`Failed to update PR: ${error.message}`);
+    }
+    return;
+  }
+
+  try {
+    logger.step(`Creating Pull Request for ${branch.branchName}...`);
+    await createPR({
+      owner: repoInfo.owner,
+      repo: repoInfo.repo,
+      title: branch.pr.title,
+      body: branch.pr.body,
+      head: branch.branchName,
+      base: branch.pr.base,
+    });
+  } catch (error) {
+    logger.error(`Failed to create PR: ${error.message}`);
   }
 }
 
@@ -114,25 +179,7 @@ async function executeBranch(branch, index, total, { ignorePR, repoInfo, autoCre
   }
 
   if (branch.pr && !ignorePR) {
-    const createPR = await shouldCreatePullRequest(branch, autoCreatePR);
-
-    if (createPR) {
-      try {
-        logger.step(`Creating Pull Request for ${branch.branchName}...`);
-        await createPullRequest({
-          owner: repoInfo.owner,
-          repo: repoInfo.repo,
-          title: branch.pr.title,
-          body: branch.pr.body,
-          head: branch.branchName,
-          base: branch.pr.base,
-        });
-      } catch (error) {
-        logger.error(`Failed to create PR: ${error.message}`);
-      }
-    } else {
-      logger.info(`PR creation skipped for branch "${branch.branchName}". You can create it manually later.`);
-    }
+    await syncPullRequest(branch, { repoInfo, autoCreatePR });
   }
 }
 
