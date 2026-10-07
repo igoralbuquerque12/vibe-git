@@ -129,7 +129,7 @@ This generates `vibe-git/exit/feature-auth-plan.json`. Review and edit that file
 vibe-git exec feature-auth-plan
 ```
 
-For every branch in the plan, `exec` creates or checks out the branch, stages the listed files, commits them, pushes the branch, and asks whether to create its Pull Request.
+For every branch in the plan, `exec` creates or checks out the branch, stages the listed files, commits them, pushes the branch, and asks whether to create its Pull Request. If the branch already has an open Pull Request, `exec` updates that PR's title and body instead of trying to create a new one.
 
 ## CLI Reference
 
@@ -162,7 +162,7 @@ By default, `run` generates PR descriptions incrementally. For each branch it lo
 | Flag | Behavior |
 | --- | --- |
 | `--ignore-pr` | Skips all Pull Request validation and creation. No `GITHUB_TOKEN` is required. |
-| `--auto-create-pr` | Creates every PR defined in the plan without asking for confirmation. Useful in non-interactive environments. |
+| `--auto-create-pr` | Creates (or updates, when one is already open) every PR defined in the plan without asking for confirmation. Useful in non-interactive environments. |
 
 Flags must be placed after the plan filename:
 
@@ -270,7 +270,7 @@ Organizations may require approval before a fine-grained token can access their 
 2. Runs `git add "<file>"` for every file in each commit.
 3. Runs `git commit -m "<message>"`.
 4. Runs `git push origin "<branch>"`.
-5. Optionally creates the configured Pull Request.
+5. Optionally creates the configured Pull Request, or updates the title and body of the Pull Request already open for that branch.
 
 Between branches, it checks out the plan's `sourceBranch`. Use `--ignore-pr` when you only want branches, commits, and pushes.
 
