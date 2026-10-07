@@ -2,6 +2,8 @@
 
 An AI-powered CLI that turns your repository changes into an atomic commit plan, executes the plan, pushes branches, and optionally creates Pull Requests.
 
+📚 **Full documentation:** [igoralbuquerque.site/projetos/vibe-git/docs](https://www.igoralbuquerque.site/projetos/vibe-git/docs)
+
 ## What It Does
 
 `vibe-git` reads the current Git diff and untracked files, sends that context to your selected AI provider, and produces one of two outputs:
