@@ -228,7 +228,9 @@ O `exec` lê o JSON e percorre as branches. Para cada uma:
 
 Antes de qualquer comando há uma validação: um plano sem branches, ou com um PR sem branch de destino, é recusado. Daí em diante o executor é tolerante: um arquivo que não existe vira aviso, um commit vazio é pulado, e uma falha de push é registrada sem interromper as outras branches.
 
-A criação de PR tem três modos. Por padrão o CLI pergunta, branch por branch. Com `--auto-create-pr` ele cria tudo sem perguntar, o que serve para rodar sem terminal interativo. Com `--ignore-pr` ele não toca no GitHub.
+A criação de PR tem três modos. Por padrão o CLI pergunta, branch por branch. Com `--auto` ele cria tudo sem perguntar, o que serve para rodar sem terminal interativo. Com `--ignore-pr` ele não toca no GitHub.
+
+A `--draft` é ortogonal a esses modos: ela só acrescenta `draft: true` ao corpo da chamada `POST /pulls`, então vale no momento em que um PR é criado. Para uma branch que já tem PR aberto, o `PATCH` continua limitado a título e corpo, porque a API REST não transforma um PR existente em rascunho; nesse caso o `syncPullRequest` registra um aviso.
 
 Antes de perguntar, o `exec` consulta o GitHub pelo PR aberto da branch, com a mesma função que o `run` usa para os PRs incrementais. Se existe um, ele não tenta criar outro (o GitHub recusaria): faz um `PATCH` só com título e corpo. É o que fecha o ciclo dos PRs incrementais, já que o `run` gera a descrição mesclada e o `exec` a publica no PR existente.
 
