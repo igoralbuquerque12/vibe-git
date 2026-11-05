@@ -89,7 +89,7 @@ export async function shouldCreatePullRequest(
 
 export async function syncPullRequest(
   branch,
-  { repoInfo, autoCreatePR },
+  { repoInfo, autoCreatePR, draftPR = false },
   {
     getOpenPR = getOpenPullRequest,
     createPR = createPullRequest,
@@ -115,6 +115,12 @@ export async function syncPullRequest(
   }
 
   if (existingPr) {
+    if (draftPR) {
+      logger.warn(
+        `--draft only applies to new Pull Requests; PR #${existingPr.number} keeps its current draft state.`
+      );
+    }
+
     try {
       logger.step(`Updating Pull Request #${existingPr.number} for ${branch.branchName}...`);
       await updatePR({
@@ -131,7 +137,7 @@ export async function syncPullRequest(
   }
 
   try {
-    logger.step(`Creating Pull Request for ${branch.branchName}...`);
+    logger.step(`Creating ${draftPR ? "draft " : ""}Pull Request for ${branch.branchName}...`);
     await createPR({
       owner: repoInfo.owner,
       repo: repoInfo.repo,
@@ -139,13 +145,14 @@ export async function syncPullRequest(
       body: branch.pr.body,
       head: branch.branchName,
       base: branch.pr.base,
+      draft: draftPR,
     });
   } catch (error) {
     logger.error(`Failed to create PR: ${error.message}`);
   }
 }
 
-async function executeBranch(branch, index, total, { ignorePR, repoInfo, autoCreatePR }) {
+async function executeBranch(branch, index, total, { ignorePR, repoInfo, autoCreatePR, draftPR }) {
   logger.step(`[Branch ${index + 1}/${total}] ${branch.branchName}`);
 
   try {
@@ -179,7 +186,7 @@ async function executeBranch(branch, index, total, { ignorePR, repoInfo, autoCre
   }
 
   if (branch.pr && !ignorePR) {
-    await syncPullRequest(branch, { repoInfo, autoCreatePR });
+    await syncPullRequest(branch, { repoInfo, autoCreatePR, draftPR });
   }
 }
 
@@ -201,7 +208,8 @@ export class ExecutePlanUseCase {
       }
 
       const ignorePR = flags.includes("--ignore-pr");
-      const autoCreatePR = flags.includes("--auto-create-pr");
+      const autoCreatePR = flags.includes("--auto");
+      const draftPR = flags.includes("--draft");
 
       validatePlan(plan, ignorePR);
 
@@ -221,7 +229,8 @@ export class ExecutePlanUseCase {
         await executeBranch(plan.branches[i], i, plan.branches.length, {
           ignorePR,
           repoInfo,
-          autoCreatePR
+          autoCreatePR,
+          draftPR
         });
 
         if (i == plan.branches.length - 1) {

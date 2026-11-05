@@ -5,14 +5,14 @@ import {
   shouldCreatePullRequest,
   syncPullRequest,
 } from "../src/application/use-cases/execute-plan.uc.js";
-import { updatePullRequest } from "../src/services/github.js";
+import { createPullRequest, updatePullRequest } from "../src/services/github.js";
 
 const branch = {
   branchName: "feature/example",
   pr: { base: "main" }
 };
 
-test("--auto-create-pr creates the PR without opening readline", async () => {
+test("--auto creates the PR without opening readline", async () => {
   const createInterface = () => {
     throw new Error("readline should not be opened");
   };
@@ -95,10 +95,37 @@ test("creates a new PR when the branch has no open PR", async () => {
       title: "feat: new title",
       body: "new body",
       head: "feature/example",
-      base: "main"
+      base: "main",
+      draft: false
     }
   ]);
   assert.equal(calls.updated.length, 0);
+});
+
+test("creates the PR as draft when draftPR is enabled", async () => {
+  const { calls, deps } = createPrDeps();
+
+  await syncPullRequest(prBranch, { repoInfo, autoCreatePR: true, draftPR: true }, deps);
+
+  assert.equal(calls.created.length, 1);
+  assert.equal(calls.created[0].draft, true);
+});
+
+test("draftPR does not change how an already open PR is updated", async () => {
+  const { calls, deps } = createPrDeps({ existingPr: { number: 7 } });
+
+  await syncPullRequest(prBranch, { repoInfo, autoCreatePR: true, draftPR: true }, deps);
+
+  assert.equal(calls.created.length, 0);
+  assert.deepEqual(calls.updated, [
+    {
+      owner: "acme",
+      repo: "app",
+      number: 7,
+      title: "feat: new title",
+      body: "new body"
+    }
+  ]);
 });
 
 test("updates only title and body when the branch already has an open PR", async () => {
@@ -170,4 +197,57 @@ test("updatePullRequest sends a PATCH with title and body only", async t => {
   assert.equal(request.url, "https://api.github.com/repos/acme/app/pulls/7");
   assert.equal(request.options.method, "PATCH");
   assert.deepEqual(JSON.parse(request.options.body), { title: "t", body: "b" });
+});
+
+async function captureCreatePullRequestBody(t, args) {
+  const originalFetch = globalThis.fetch;
+  const originalToken = process.env.GITHUB_TOKEN;
+  let request = null;
+
+  process.env.GITHUB_TOKEN = "test-token";
+  globalThis.fetch = async (url, options) => {
+    request = { url, options };
+    return { ok: true, json: async () => ({ html_url: "https://example.test/pr/8" }) };
+  };
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+    if (originalToken === undefined) {
+      delete process.env.GITHUB_TOKEN;
+    } else {
+      process.env.GITHUB_TOKEN = originalToken;
+    }
+  });
+
+  await createPullRequest(args);
+
+  assert.equal(request.url, "https://api.github.com/repos/acme/app/pulls");
+  assert.equal(request.options.method, "POST");
+  return JSON.parse(request.options.body);
+}
+
+const createArgs = {
+  owner: "acme",
+  repo: "app",
+  title: "t",
+  body: "b",
+  head: "feature/example",
+  base: "main"
+};
+
+test("createPullRequest sends draft: true when requested", async t => {
+  const payload = await captureCreatePullRequestBody(t, { ...createArgs, draft: true });
+
+  assert.deepEqual(payload, {
+    title: "t",
+    body: "b",
+    head: "feature/example",
+    base: "main",
+    draft: true
+  });
+});
+
+test("createPullRequest opens a ready-for-review PR by default", async t => {
+  const payload = await captureCreatePullRequestBody(t, createArgs);
+
+  assert.equal(payload.draft, false);
 });
