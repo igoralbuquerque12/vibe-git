@@ -16,7 +16,9 @@ npm test
 node bin/cli.js init
 node bin/cli.js run <arquivo.json>
 node bin/cli.js plan <arquivo.json>
-node bin/cli.js exec <arquivo.json> [--ignore-pr] [--auto-create-pr]
+node bin/cli.js exec <arquivo.json> [--ignore-pr] [--auto] [--draft]
+node bin/cli.js --help
+node bin/cli.js --version
 ```
 
 Antes de concluir qualquer alteracao de codigo, execute `npm test`.

@@ -228,7 +228,9 @@ Anyone who wants to start from scratch passes `--ignore-pr-history`.
 
 Before any command there is a validation: a plan with no branches, or with a PR without a target branch, is rejected. From there on the executor is tolerant: a file that does not exist becomes a warning, an empty commit is skipped, and a push failure is recorded without interrupting the other branches.
 
-PR creation has three modes. By default the CLI asks, branch by branch. With `--auto-create-pr` it creates everything without asking, which is useful for running without an interactive terminal. With `--ignore-pr` it does not touch GitHub.
+PR creation has three modes. By default the CLI asks, branch by branch. With `--auto` it creates everything without asking, which is useful for running without an interactive terminal. With `--ignore-pr` it does not touch GitHub.
+
+`--draft` is orthogonal to those modes: it only adds `draft: true` to the body of the `POST /pulls` call, so it takes effect when a PR is created. For a branch that already has an open PR, the `PATCH` stays limited to title and body, because the REST API cannot turn an existing PR into a draft; in that case `syncPullRequest` logs a warning.
 
 Before asking, `exec` looks up the branch's open PR on GitHub, with the same function `run` uses for incremental PRs. If there is one, it does not try to create another (GitHub would reject it): it sends a `PATCH` with only the title and body. This closes the loop on incremental PRs, since `run` generates the merged description and `exec` publishes it to the existing PR.
 

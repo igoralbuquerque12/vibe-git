@@ -1,6 +1,6 @@
 import logger from "#shared/logger";
 
-export async function createPullRequest({ owner, repo, title, body, head, base }) {
+export async function createPullRequest({ owner, repo, title, body, head, base, draft = false }) {
   const token = process.env.GITHUB_TOKEN;
 
   if (!token) {
@@ -17,7 +17,7 @@ export async function createPullRequest({ owner, repo, title, body, head, base }
         Accept: "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
       },
-      body: JSON.stringify({ title, body, head, base }),
+      body: JSON.stringify({ title, body, head, base, draft }),
     }
   );
 

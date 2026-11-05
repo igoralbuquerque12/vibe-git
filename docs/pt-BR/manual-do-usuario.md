@@ -25,7 +25,9 @@ Este manual está organizado por comando. Para cada um você encontra a sintaxe,
 vibe-git init
 vibe-git run  <arquivo-de-entrada> [--ignore-pr-history]
 vibe-git plan <arquivo-de-entrada>
-vibe-git exec <arquivo-de-saída>   [--ignore-pr] [--auto-create-pr]
+vibe-git exec <arquivo-de-saída>   [--ignore-pr] [--auto] [--draft]
+vibe-git --help | -h
+vibe-git --version | -v
 ```
 
 | Comando | Para que serve | Altera o Git? |
@@ -40,7 +42,9 @@ Regras que valem para todos os comandos:
 - Rode sempre a partir da raiz do repositório Git que você quer processar.
 - O nome do arquivo pode ser passado com ou sem `.json`: `vibe-git run example` e `vibe-git run example.json` são equivalentes.
 - As flags vêm **depois** do nome do arquivo.
-- Chamar `vibe-git` sem comando, ou com um comando desconhecido, imprime o resumo de uso.
+- Chamar `vibe-git` sem comando imprime a ajuda. Com um comando desconhecido, imprime um erro seguido da ajuda e termina com código 1.
+- `vibe-git --version` (ou `-v`) imprime a versão instalada.
+- `--help` (ou `-h`) funciona sozinha e depois de qualquer comando, como em `vibe-git exec --help`. `vibe-git help <comando>` é equivalente.
 
 ## Antes de começar
 
@@ -232,7 +236,7 @@ Executa um plano JSON gerado pelo `run`.
 > **Atenção:** este comando roda comandos Git reais e faz push. Revise o plano antes.
 
 ```bash
-vibe-git exec <arquivo-de-saída> [--ignore-pr] [--auto-create-pr]
+vibe-git exec <arquivo-de-saída> [--ignore-pr] [--auto] [--draft]
 ```
 
 ### Argumentos
@@ -246,9 +250,12 @@ vibe-git exec <arquivo-de-saída> [--ignore-pr] [--auto-create-pr]
 | Flag | Efeito |
 | --- | --- |
 | `--ignore-pr` | Não valida nem cria Pull Requests. Só branches, commits e push. Dispensa o `GITHUB_TOKEN`. |
-| `--auto-create-pr` | Cria todos os PRs do plano sem perguntar, ou atualiza os que já estão abertos. Indicado para ambientes sem terminal interativo. |
+| `--auto` | Cria todos os PRs do plano sem perguntar, ou atualiza os que já estão abertos. Indicado para ambientes sem terminal interativo. |
+| `--draft` | Abre como rascunho (draft) os PRs que o `exec` criar. Combina com a pergunta interativa e com `--auto`. |
 
-Se as duas flags forem passadas, `--ignore-pr` vence e nenhum PR é criado nem atualizado.
+Se `--ignore-pr` for passada junto com as outras flags, `--ignore-pr` vence e nenhum PR é criado nem atualizado.
+
+A `--draft` só vale quando um PR é **criado**. Se a branch já tem um PR aberto, o `exec` apenas atualiza o título e o corpo dele, mostra um aviso e mantém o estado atual do PR (rascunho ou pronto para revisão). A API REST do GitHub não converte um PR existente em rascunho. Além disso, o repositório precisa suportar PRs em rascunho: em repositórios privados de alguns planos do GitHub, a criação é recusada e o erro aparece no terminal.
 
 Sem nenhuma flag, o comando pergunta no terminal, branch por branch, se deve criar o PR. Só a resposta `y` cria; qualquer outra pula.
 
@@ -305,7 +312,10 @@ vibe-git exec feature-auth-plan
 vibe-git exec feature-auth-plan --ignore-pr
 
 # Cria todos os PRs sem perguntar
-vibe-git exec feature-auth-plan --auto-create-pr
+vibe-git exec feature-auth-plan --auto
+
+# Cria todos os PRs como rascunho, sem perguntar
+vibe-git exec feature-auth-plan --auto --draft
 ```
 
 ### Erros comuns
@@ -445,7 +455,7 @@ vibe-git exec feature-auth-plan --ignore-pr
 
 ```bash
 vibe-git run example
-vibe-git exec feature-auth-plan --auto-create-pr
+vibe-git exec feature-auth-plan --auto
 ```
 
 ### Manual, a partir do Markdown

@@ -139,10 +139,12 @@ For every branch in the plan, `exec` creates or checks out the branch, stages th
 vibe-git init
 vibe-git run <entry-file> [--ignore-pr-history]
 vibe-git plan <entry-file>
-vibe-git exec <exit-file> [--ignore-pr] [--auto-create-pr]
+vibe-git exec <exit-file> [--ignore-pr] [--auto] [--draft]
+vibe-git --help | -h
+vibe-git --version | -v
 ```
 
-Running `vibe-git` without a valid command prints this usage summary.
+Running `vibe-git` with no command prints the help. An unknown command prints an error followed by the help and exits with code 1. Add `--help` after any command (for example `vibe-git exec --help`) to see its flags.
 
 | Command | Parameters | Result |
 | --- | --- | --- |
@@ -164,16 +166,18 @@ By default, `run` generates PR descriptions incrementally. For each branch it lo
 | Flag | Behavior |
 | --- | --- |
 | `--ignore-pr` | Skips all Pull Request validation and creation. No `GITHUB_TOKEN` is required. |
-| `--auto-create-pr` | Creates (or updates, when one is already open) every PR defined in the plan without asking for confirmation. Useful in non-interactive environments. |
+| `--auto` | Creates (or updates, when one is already open) every PR defined in the plan without asking for confirmation. Useful in non-interactive environments. |
+| `--draft` | Opens newly created Pull Requests as drafts. A PR that is already open is only updated and keeps its current draft state. |
 
 Flags must be placed after the plan filename:
 
 ```bash
 vibe-git exec feature-auth-plan --ignore-pr
-vibe-git exec feature-auth-plan --auto-create-pr
+vibe-git exec feature-auth-plan --auto
+vibe-git exec feature-auth-plan --auto --draft
 ```
 
-If both flags are provided, `--ignore-pr` takes precedence and no Pull Request is created.
+If both `--ignore-pr` and a PR flag are provided, `--ignore-pr` takes precedence and no Pull Request is created.
 
 ## Entry File Reference
 
